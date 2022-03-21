@@ -1,6 +1,6 @@
 import sys
 import Board
-import Scene
+import Game
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMessageBox, QDesktopWidget, QGroupBox, QFormLayout, \
@@ -17,6 +17,8 @@ class App(QWidget):
         self.playing = False
         self.pegClicked = False
         self.posClicked = False
+        self.blackPegs = []
+        self.whitePegs = []
         self.mainLayout = QVBoxLayout()
         self.parametersBox = QGroupBox("Paramètres")
         self.importBox = QGroupBox("Import du plateau")
@@ -101,16 +103,17 @@ class App(QWidget):
         if self.comboPlayer1.currentText() == "Humain" and self.comboPlayer2.currentText() == "Humain":
             self.AISlider.hide()
             self.AILevel.setText("L'IA ne jouera pas si les deux joueurs sont humains.")
+            self.AISlider.setValue(-1)
 
         else:
             self.AILevel.setText(str(self.AISlider.value() / 10))
             self.AISlider.show()
 
-    def createScene(self, board):
-        self.scene = QGraphicsScene(0, 0, 80 * len(board), 80 * len(board[0]))
+    def createScene(self):
+        self.scene = QGraphicsScene(0, 0, 80 * self.board.getlineDimension(), 80 * self.board.getColumnDimension())
         self.mainLayout.setContentsMargins(10, 10, 10, 10)
-        self.initBoard(board)
-        self.initPegs(board)
+        self.initBoard()
+        self.initPegs()
         self.view = QGraphicsView(self.scene)
         preview = QLabel("Aperçu")
         self.start = QPushButton("Commencer")
@@ -121,25 +124,15 @@ class App(QWidget):
         self.mainLayout.addWidget(self.start)
         # self.view.show()
 
-    def initPegs(self, board):
-        for i in range(len(board)):
-            for j in range(len(board[0])):
-                if board[i][j] == 1:
+    def initPegs(self):
+        for i in range(self.board.getlineDimension()):
+            for j in range(self.board.getColumnDimension()):
+                if self.board.getBoard()[i][j] == 1:
                     self.placeWhitePegs(i, j)
-                elif board[i][j] == 2:
+                elif self.board.getBoard()[i][j] == 2:
                     self.placeBlackPegs(i, j)
 
     def placeBlackPegs(self, i, j):
-        pegs = QGraphicsEllipseItem(0, 0, 50, 50)
-        pegs.setPos(15 + j * 80, 15 + i * 80)
-        brush = QBrush(Qt.white)
-        pegs.setBrush(brush)
-        pen = QPen(Qt.black)
-        pen.setWidth(1)
-        pegs.setPen(pen)
-        self.scene.addItem(pegs)
-
-    def placeWhitePegs(self, i, j):
         pegs = QGraphicsEllipseItem(0, 0, 50, 50)
         pegs.setPos(15 + j * 80, 15 + i * 80)
         brush = QBrush(Qt.black)
@@ -148,12 +141,23 @@ class App(QWidget):
         pen.setWidth(1)
         pegs.setPen(pen)
         self.scene.addItem(pegs)
+        self.blackPegs.append(pegs)
 
-    def initBoard(self, board):
-        self.lineDimension = len(board)
-        self.columnDimension = len(board[0])
-        for i in range(self.lineDimension):
-            for j in range(self.columnDimension):
+    def placeWhitePegs(self, i, j):
+        pegs = QGraphicsEllipseItem(0, 0, 50, 50)
+        pegs.setPos(15 + j * 80, 15 + i * 80)
+        brush = QBrush(Qt.white)
+        pegs.setBrush(brush)
+        pen = QPen(Qt.black)
+        pen.setWidth(1)
+        pegs.setPen(pen)
+        self.scene.addItem(pegs)
+        self.whitePegs.append(pegs)
+
+    def initBoard(self):
+
+        for i in range(self.board.getlineDimension()):
+            for j in range(self.board.getColumnDimension()):
                 rect = QGraphicsRectItem(0, 0, 80, 80)
                 rect.setPos(80 * i, 80 * j)
                 if i % 2 == 0:
@@ -177,21 +181,58 @@ class App(QWidget):
         file, check = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()",
                                                   "", "Text Files (*.txt)")
         if check:
-            board = Board.Board(file)
+            self.board = Board.Board(file)
             self.fileSelected.setText(file)
-            self.createScene(board.getBoard())
+            self.createScene()
 
     def play(self):
         self.playing = True
-        for item in self.scene.items():
-            item.setFlag(QGraphicsItem.ItemIsSelectable)
-        self.scene.selectionChanged.connect(self.movePegs)
+        """for item in self.scene.items():
+            if type(item) == QGraphicsRectItem:
+                item.setFlag(QGraphicsItem.ItemIsSelectable)"""
         self.createStopButton()
         AIDelay = self.AISlider.value()
         player1Type = self.comboPlayer1.currentText()
         player2Type = self.comboPlayer2.currentText()
+        self.game = Game.Game(player1Type, player2Type, AIDelay, self.board)
+        self.humainVSHumain("white", "black")
+        self.scene.selectionChanged.connect(self.selectPeg)
 
+    def selectPeg(self):
+        if len(self.scene.selectedItems()) > 0:
+            if type(self.scene.selectedItems()[0]) == QGraphicsEllipseItem:
+                self.selectedPeg = self.scene.selectedItems()[0]
+                self.game.getPossibleMoves(self.currentPlayer,[int(self.selectedPeg.scenePos().y() // 80), int(self.selectedPeg.scenePos().x() // 80)])
 
+    def humainVSHumain(self, currentPlayer, nextPlayer):
+        self.currentPlayer = currentPlayer
+        movablePegs = self.game.getMovablePegs(currentPlayer)
+        if currentPlayer == "white":
+            self.unlockWhitePegs(movablePegs)
+        else:
+            self.unlockBlackPegs(movablePegs)
+
+    def unlockBlackPegs(self, movablePegs):
+        for i in range(len(movablePegs)):
+            for item in self.blackPegs:
+
+                if int(item.scenePos().y() // 80) == movablePegs[i][0] and int(item.scenePos().x() // 80) == \
+                        movablePegs[i][1] and type(item) == QGraphicsEllipseItem:
+                    item.setFlag(QGraphicsItem.ItemIsSelectable)
+                    pen = QPen(Qt.blue)
+                    pen.setWidth(3)
+                    item.setPen(pen)
+
+    def unlockWhitePegs(self, movablePegs):
+        for i in range(len(movablePegs)):
+            for item in self.whitePegs:
+
+                if int(item.scenePos().y() // 80) == movablePegs[i][0] and int(item.scenePos().x() // 80) == \
+                        movablePegs[i][1] and type(item) == QGraphicsEllipseItem:
+                    item.setFlag(QGraphicsItem.ItemIsSelectable)
+                    pen = QPen(Qt.blue)
+                    pen.setWidth(3)
+                    item.setPen(pen)
 
     def createStopButton(self):
         self.start.hide()
