@@ -1,4 +1,3 @@
-
 """
 Nom: De Keyser
 Prénom: Maeva
@@ -11,48 +10,33 @@ import Utils
 
 class Move:
     """
-    Classe qui représente un mouvement du joueur. Une nouvelle instance de move est crée à chaque mouvement.
+    Classe qui représente un mouvement du joueur. Une nouvelle instance de move est créé à chaque mouvement.
     """
 
-    def __init__(self, player, board):
+    def __init__(self, player, source, destination):
         """
-        source est la liste des mouvements qui peuvent être joués
-        :param player: joueur effectuant le coup
-        :param board: plateau du jeu
+        Source est la liste des mouvements qui peuvent être joués
+        : param player : joueur effectuant le coup
         """
 
         self.player = player
-        self.possibleSources = self.initValidPeg(board)
-        #self.inputSelectPeg(board)
-        #self.destination = Utils.inputUser(board)
-
-    def initValidPeg(self, board):
-        """
-        Méthode qui trouve un premier pion valide à proposer au joueur. On itère sur la liste des pions du joueur, et
-        si le pion est jouable, on renvoie son emplacement, sinon, on en trouve un nouveau
-        :param board: Plateau du jeu
-        :return: la position du pion jouable trouvé
-        """
-        # on itère sur la liste des pions du joueur, si le mouvement est correct on renvoie le mouvement, sinon on
-        # réessaye
-        possibleSources = []
-        for sourcePos in self.player.getPosList():
-            if Utils.checkPos(board, sourcePos, self.player.getPlayerID()):
-                possibleSources.append(sourcePos)
-        return possibleSources
-
+        self.source = source
+        self.destination = destination
+        # self.possibleSources = self.initValidPeg(board)
+        # self.inputSelectPeg(board)
+        # self.destination = Utils.inputUser(board)
 
     def getSource(self):
         """
         Getter qui renvoie la position source du mouvement.
-        :return: la position source du mouvement
+        : return : la position source du mouvement
         """
         return self.source
 
     def getDestination(self):
         """
         Getter qui renvoie la position de destination du mouvement
-        :return: La position de destination du mouvement
+        : return : La position de destination du mouvement
         """
         return self.destination
 
@@ -79,8 +63,8 @@ class Move:
         Méthode qui permet de trouver un pion pour lequel il existe un mouvement valide à gauche du pion initial
         on veut trouver une position valide la plus proche du point où on se trouve. Si on est au bord du plateau, on
         recommence tout à droite. On se sert de la dernière position trouvée pour se situer
-        :param board: plateau
-        :return: coordonnées matricielles du pion
+        : param board : plateau
+        : return : coordonnées matricielles du pion
         """
 
         coord1 = self.source[0]
@@ -100,7 +84,7 @@ class Move:
         """
         Méthode qui permet de trouver un mouvement valide à droite du pion initial
         :param board: plateau
-        :return: coordonnées matricielles du pion
+        : return : coordonnées matricielles du pion
         """
         coord1 = self.source[0]
         coord2 = self.source[1]
@@ -121,7 +105,7 @@ class Move:
         n'en trouve pas, on regarde sur celle encore supérieure, etc, jusqu'à arriver au bord du plateau, cas dans
         lequel on est replacé sur la ligne la plus basse du plateau.
         :param board: plateau
-        :return: coordonnées matricielles du pion
+        : return : coordonnées matricielles du pion
         """
         if self.source[0] == 0:
             coord1 = board.getlineDimension() - 1
@@ -150,7 +134,7 @@ class Move:
          Méthode qui permet de trouver un mouvement valable sur un pion situé en dessous du pion initial. Fonctionne
          similairement à la méthode findUpPeg
         :param board: plateau
-        :return: coordonnées matricielles du pion
+        : return : coordonnées matricielles du pion
         """
         if self.source[0] == board.getlineDimension() - 1:
             coord1 = 0

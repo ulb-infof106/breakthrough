@@ -6,6 +6,10 @@ Section: BA3 INFO
 """
 import random
 
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPen, QColor
+from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsItem
+
 """
 Fichier contenant des fonctions utilitaires
 """
@@ -16,8 +20,8 @@ def checkPos(board, move, playerID):
     Fonction qui vérifie qu'au moins un mouvement est faisable sur cette position en fct du joueur en appelant
     d'autres fonctions
     :param playerID:
-    :param board: plateau du jeu
-    :param move: mouvement choisi
+    :param board : plateau du jeu
+    :param move : mouvement choisi
     :return:
     """
     if board.getBoard()[move[0]][move[1]] == playerID and playerID == 1:
@@ -29,9 +33,9 @@ def checkPos(board, move, playerID):
 def checkPosPlayer1(board, source):
     """
     Fonction qui vérifie que la position du joueur 1 permet d'effectuer un mouvement quelconque
-    :param board: plateau du jeu
-    :param source: position du pion pour lequel il faut trouver un mouvement
-    :return: True dès qu'un mouvement potentiel a été détecté, False si n'a rien trouvé
+    :param board : plateau du jeu
+    :param source : position du pion pour lequel il faut trouver un mouvement
+    :return : True dès qu'un mouvement potentiel a été détecté, False si n'a rien trouvé
     """
     if board.getBoard()[source[0] - 1][source[1]] == 0:
         # alors on peut faire un mouvement vertical
@@ -54,9 +58,9 @@ def checkPosPlayer1(board, source):
 def checkPosPlayer2(board, source):
     """
     Fonction qui vérifie que la position du joueur 2 permet d'effectuer un mouvement quelconque
-    :param board: plateau du jeu
-    :param source: position du pion pour lequel il faut trouver un mouvement
-    :return: True dès qu'un mouvement potentiel a été détecté, False si n'a rien trouvé
+    :param board : plateau du jeu
+    :param source : position du pion pour lequel il faut trouver un mouvement
+    :return : True dès qu'un mouvement potentiel a été détecté, False si n'a rien trouvé
     """
 
     if board.getBoard()[source[0] + 1][source[1]] == 0:
@@ -80,9 +84,9 @@ def checkPosPlayer2(board, source):
 def manhattanCalculation(currentPos, possiblePegs):
     """
     Fonction qui permet de calculer la distance manhattan entre 2 positions
-    :param currentPos: position initiale du pion
-    :param possiblePegs: pions qu'on peut potentiellement sélectionner
-    :return: le pion sélectionnable qui a la plus petite distance manhattan avec le pion initial
+    :param currentPos : position initiale du pion
+    :param possiblePegs : pions qu'on peut potentiellement sélectionner
+    :return : le pion sélectionnable qui a la plus petite distance manhattan avec le pion initial
     """
     res = -1
     pos = -1
@@ -94,37 +98,11 @@ def manhattanCalculation(currentPos, possiblePegs):
     return possiblePegs[pos]
 
 
-def findMovePlayer2(board, source):
-    """
-    Fonction qui permet de trouver un mouvement faisable pour une certaine source donnée.
-    :param board: plateau du jeu
-    :param source: source du mouvement
-    :return:
-    """
-    possibleMoves = []
-    if board.getBoard()[source[0] + 1][source[1]] == 0:
-        # alors on peut faire un mouvement vertical
-        possibleMoves.append([source[0] + 1, source[1]])
-    try:
-        target = board.getBoard()[source[0] + 1][source[1] - 1]
-        if target != 2:
-            possibleMoves.append([source[0] + 1, source[1] - 1])
-    except IndexError:
-        pass
-    try:
-        target = board.getBoard()[source[0] + 1][source[1] + 1]
-        if target != 2:
-            possibleMoves.append([source[0] + 1, source[1] + 1])
-    except IndexError:
-        pass
-    return possibleMoves
-
-
 def chooseMove(best_actions):
     """
     Méthode qui permet de choisir un mouvement parmi tous ceux possibles, en fonction du score
-    :param best_actions:
-    :return: le mouvement trouvé s'il existe, None sinon
+    :param best_actions :
+    :return : le mouvement trouvé s'il existe, None sinon
     """
     if len(best_actions) == 0:
         return None
@@ -139,27 +117,46 @@ def chooseMove(best_actions):
 
 def findMovePlayer1(board, source):
     """
-    Fonction qui permet de trouver un mouvement faisable pour une certaine source donnée.
-    :param board: plateau du jeu
-    :param source: source du mouvement
-    :return: la liste des destinations de mouvement possibles
+        Fonction qui permet de trouver un mouvement faisable pour une certaine source donnée.
+        :param board : plateau du jeu
+        :param source : source du mouvement
+        :return :
     """
     possibleMoves = []
     if board.getBoard()[source[0] - 1][source[1]] == 0:
         # alors on peut faire un mouvement vertical
         possibleMoves.append([source[0] - 1, source[1]])
-    try:
-        target = board.getBoard()[source[0] - 1][source[1] - 1]
-        if target != 1:
+    if source[1] > 0:
+        if board.getBoard()[source[0] - 1][source[1] - 1] != 1:
+            # alors on peut faire un mouvement diagonal gauche
             possibleMoves.append([source[0] - 1, source[1] - 1])
-    except IndexError:
-        pass
-    try:
-        target = board.getBoard()[source[0] - 1][source[1] + 1]
-        if target != 1:
+    if source[1] < board.getColumnDimension() - 1:
+
+        if board.getBoard()[source[0] - 1][source[1] + 1] != 1:
+            # alors on peut faire un mouvement diagonal droit
             possibleMoves.append([source[0] - 1, source[1] + 1])
-    except IndexError:
-        pass
+    return possibleMoves
+
+
+def findMovePlayer2(board, source):
+    """
+        Fonction qui permet de trouver un mouvement faisable pour une certaine source donnée.
+        :param board : plateau du jeu
+        :param source : source du mouvement
+        :return :
+    """
+    possibleMoves = []
+    if board.getBoard()[source[0] + 1][source[1]] == 0:
+        # alors on peut faire un mouvement vertical
+        possibleMoves.append([source[0] + 1, source[1]])
+    if source[1] > 0:
+        if board.getBoard()[source[0] + 1][source[1] - 1] != 2:
+            # alors on peut faire un mouvement diagonal gauche
+            possibleMoves.append([source[0] + 1, source[1] - 1])
+    if source[1] < board.getColumnDimension() - 1:
+        if board.getBoard()[source[0] + 1][source[1] + 1] != 2:
+            # alors on peut faire un mouvement diagonal droit
+            possibleMoves.append([source[0] + 1, source[1] + 1])
     return possibleMoves
 
 
@@ -179,10 +176,10 @@ def findBestScore(maximize):
 def isBetter(score, best_score, maximize):
     """
     Méthode qui permet de déterminer si le score trouvé est meilleur que le meilleur score
-    :param score: score trouvé
-    :param best_score: meilleur score précédent
-    :param maximize:
-    :return: True si score est meilleur que best_score, False sinon.
+    :param score : score trouvé
+    :param best_score : meilleur score précédent
+    :param maximize :
+    :return : True si score est meilleur que best_score, False sinon.
     """
     if maximize:
         if score > best_score:
@@ -195,11 +192,11 @@ def isBetter(score, best_score, maximize):
 
 def convertPosToInt(str_pos, board):
     """
-    Fonction qui permet d'extraire une position,donc de traduire en coordonnées matricielles les coordonnées entrées
+    Fonction qui permet d'extraire une position, donc de traduire en coordonnées matricielles les coordonnées entrées
     par le joueur
-    :param board:
-    :param str_pos: position à traduire
-    :return: les coordonnées matricielles de la position
+    :param board :
+    :param str_pos : position à traduire
+    :return : les coordonnées matricielles de la position
     """
     alphabet = "abcdefghijklmnopqrstuvwxyz"
     literalCoord = str_pos[0]
@@ -208,13 +205,14 @@ def convertPosToInt(str_pos, board):
     j = alphabet.index(literalCoord)
     return [i, j]
 
+
 def extractPosition(n, str_pos):
     """
-    Fonction qui permet d'extraire une position,donc de traduire en coordonnées matricielles les coordonnées entrées
+    Fonction qui permet d'extraire une position, donc de traduire en coordonnées matricielles les coordonnées entrées
     par le joueur
-    :param n: taille du plateau
-    :param str_pos: position à traduire
-    :return: les coordonnées matricielles de la position
+    :param n : taille du plateau
+    :param str_pos : position à traduire
+    :return : les coordonnées matricielles de la position
     """
     alphabet = "abcdefghijklmnopqrstuvwxyz"
     literalCoord = str_pos[0]
@@ -246,3 +244,57 @@ def inputUser(board):
         except ValueError:
             print("Veuillez respecter les règles d'encodage")
             move = input("Veuillez sélectionner une case où placer votre pion: ")
+
+
+def findPossibleSources(board, player):
+    """
+    Méthode qui trouve un premier pion valide à proposer au joueur. On itère sur la liste des pions du joueur, et
+    si le pion est jouable, on renvoie son emplacement, sinon, on en trouve un nouveau
+    :param player :
+    :param board : Plateau du jeu
+    :return : la position du pion jouable trouvé
+    """
+    # on itère sur la liste des pions du joueur, si le mouvement est correct on renvoie le mouvement, sinon on
+    # réessaye
+    possibleSources = []
+    for sourcePos in player.getPosList():
+        if checkPos(board, sourcePos, player.getPlayerID()):
+            possibleSources.append(sourcePos)
+    return possibleSources
+
+
+def findPossibleDestinations(source, board, player):
+    """
+    Méthode permettant de trouver les destinations possibles pour une certaine source donnée en fonction de
+    maximize.
+    :param player:
+    :param source : source du mouvement
+    :param board :
+    :return : la liste des destinations du mouvement possible
+    """
+
+    if player.getPlayerID() == 1:
+        return findMovePlayer1(board, source)
+    else:
+        return findMovePlayer2(board, source)
+
+
+def squareContour(item):
+    pen = QPen(QColor(252, 204, 116))
+    pen.setWidth(0)
+    item.setPen(pen)
+
+
+def pegsContour(item):
+    pen = QPen(Qt.black)
+    pen.setWidth(0)
+    item.setPen(pen)
+
+
+def selectedPegContour(i, item, movablePegs):
+    if int(item.scenePos().y() // 80) == movablePegs[i][0] and int(item.scenePos().x() // 80) == \
+            movablePegs[i][1] and type(item) == QGraphicsEllipseItem:
+        item.setFlag(QGraphicsItem.ItemIsSelectable)
+        pen = QPen(Qt.blue)
+        pen.setWidth(3)
+        item.setPen(pen)

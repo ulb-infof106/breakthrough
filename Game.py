@@ -5,11 +5,10 @@ Matricule: 000454537
 Section: BA3 INFO
 """
 
-import sys
-import Board
 import Player
 import Move
 import IA
+import Utils
 
 
 class Game:
@@ -20,7 +19,7 @@ class Game:
     def __init__(self, player1, player2, delay, board):
         """
         Constructeur de la classe représentant l'état de la partie. On commence par initialiser un plateau via un
-        fichier, et on crée des insiances de 2 joueurs, puis celle de l'IA qui correspondra à un joueur.
+        fichier, et on crée des instances de 2 joueurs, puis celle de l'IA qui correspondra à un joueur.
         """
         self.winner = 0
         self.board = board
@@ -49,25 +48,18 @@ class Game:
 
     def getBoard(self):
         """
-        getter qui renvoie le plateau du jeu
-        :return: Le plateau du jeu
+        Getter qui renvoie le plateau du jeu
+        : return : Le plateau du jeu
         """
         return self.board
-
-    def getWinner(self):
-        """
-        Getter qui renvoie le gagnant du jeu
-        :return: Le gagnant de la partie
-        """
-        return self.winner
 
     def checkForwardMove(self, player, sourcePos, destinationPos):
         """
         Méthode qui vérifie que le mouvement "tout droit" du joueur est correct
-        :param player: joueur actuel
-        :param destinationPos: position de destination
-        :param sourcePos: position source
-        :return: true si mouvement correct, false sinon
+        : param player : joueur actuel
+        : param destinationPos : position de destination
+        : param sourcePos : position source
+        : return : true si mouvement correct, false sinon
         """
 
         if (sourcePos[1] == destinationPos[1] and self.board.getBoard()[destinationPos[0]][destinationPos[1]] != 0) or \
@@ -84,13 +76,13 @@ class Game:
     def checkDiagonalMove(self, player, sourcePos, destinationPos):
         """
         Méthode qui vérifie que le mouvement en diagonale du joueur est correct
-        :param player: joueur actuel
-        :param destinationPos: position de destination
-        :param sourcePos: position source
-        :return: true si mouvement correct, false sinon
+        : param player : joueur actuel
+        : param destinationPos : position de destination
+        : param sourcePos : position source
+        : return : true si mouvement correct, false sinon
         """
         if player.getPlayerID() == 2 and destinationPos[1] != sourcePos[1] and (not destinationPos[0] > sourcePos[0]):
-            # si le joueur essaye de se déplacer latéralement ou vers les diagonales arrières
+            # si le joueur essaye de se déplacer latéralement ou vers les diagonales arrière
             return False
         if player.getPlayerID() == 1 and destinationPos[1] != sourcePos[1] and (not destinationPos[0] < sourcePos[0]):
             return False
@@ -109,19 +101,13 @@ class Game:
     def detectWin(self):
         """
         Méthode qui permet de détecter si le coup venant d'être joué fait gagner un des joueurs.
-        :return: aucun
+        : return : aucun
         """
         wonPlayer1 = self.board.detectWinner(self.player1, self.player2)
         wonPlayer2 = self.board.detectWinner(self.player2, self.player1)
         self.winner = wonPlayer1 + wonPlayer2
-        if self.winner == 1:
-            print("Le joueur blanc a gagné")
-            self.board.printBoard()
-        elif self.winner == 2:
-            print("Le joueur noir a gagné")
-            self.board.printBoard()
 
-    def humainVSAi(self, currentPlayer, nextPlayer):
+    # def humainVSAi(self, currentPlayer, nextPlayer):
         """
         Joueur 1 est humain, joueur 2 est AI
         Méthode récursive qui permet de jouer la partie. On commence par demander un mouvement au joueur, puis on le
@@ -129,7 +115,7 @@ class Game:
         Ensuite, on détecte si un des joueurs a gagné la partie. Si non, la méthode est rappelée.
         :return:
         """
-        move = Move.Move(currentPlayer, self.board)
+        """move = Move.Move(currentPlayer, self.board)
         if self.checkDiagonalMove(currentPlayer, move.getSource(), move.getDestination()) and self.checkForwardMove(
                 currentPlayer, move.getSource(), move.getDestination()):
             currentPlayer.updatePosList(move.getSource(), move.getDestination(), nextPlayer.getPosList())
@@ -140,21 +126,42 @@ class Game:
                 try:
                     self.IA.play(self)
                     self.humainVSAi(currentPlayer, nextPlayer)
-                except AttributeError:  # si ai == None, on va obtenur une attribute error
+                except AttributeError:  # si ai == None, on va obtenir une attribute error
                     self.humainVSAi(nextPlayer, currentPlayer)
 
         else:
             print("Veuillez entrer une coordonnée valide:")
-            self.humainVSAi(currentPlayer, nextPlayer)
+            self.humainVSAi(currentPlayer, nextPlayer)"""
 
     def getMovablePegs(self, currentPlayer):
         if currentPlayer == "white":
-            move = Move.Move(self.player1, self.board)
-            return move.possibleSources
+            return Utils.findPossibleSources(self.board, self.player1)
         else:
-            move = Move.Move(self.player2, self.board)
-            return move.possibleSources
+            return Utils.findPossibleSources(self.board, self.player2)
 
-    def getPossibleMoves(self, currentPlayer, pos):
-        #on envoie une pos et on veut obtenir tous les mouvements possibles pour cette pos
-        pass
+    def getPossibleDestinations(self, currentPlayer, pos):
+        # on envoie une pos et on veut obtenir tous les mouvements possibles pour cette pos
+        if currentPlayer == "white":
+            return Utils.findPossibleDestinations(pos, self.board, self.player1)
+        else:
+            return Utils.findPossibleDestinations(pos, self.board, self.player2)
+
+    def makeMove(self, currentPlayer, source, destination):
+        currentPlayer, nextPlayer = self.getPlayers(currentPlayer)
+        move = Move.Move(currentPlayer, source, destination)
+        if self.checkDiagonalMove(currentPlayer, move.getSource(), move.getDestination()) and self.checkForwardMove(
+                currentPlayer, move.getSource(), move.getDestination()):
+            currentPlayer.updatePosList(move.getSource(), move.getDestination(), nextPlayer.getPosList())
+            self.board.updateBoard(move.getSource(), move.getDestination(), currentPlayer)
+            return True
+        return False
+
+    def getWinner(self):
+        self.detectWin()
+        return self.winner
+
+    def getPlayers(self, currentPlayer):
+        if currentPlayer == "white":
+            return self.player1, self.player2
+        else:
+            return self.player2, self.player1
