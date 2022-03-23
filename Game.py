@@ -16,7 +16,7 @@ class Game:
     Classe qui représente l'état de la partie
     """
 
-    def __init__(self, player1, player2, delay, board):
+    def __init__(self, player1, player2, board):
         """
         Constructeur de la classe représentant l'état de la partie. On commence par initialiser un plateau via un
         fichier, et on crée des instances de 2 joueurs, puis celle de l'IA qui correspondra à un joueur.
@@ -25,26 +25,18 @@ class Game:
         self.board = board
         self.player1 = Player.Player(1, self.board)
         self.player2 = Player.Player(2, self.board)
-        self.chooseGameMode(player1, player2, delay)
+        self.chooseGameMode(player1, player2)
 
-    def chooseGameMode(self, player1, player2, delay):
+    def chooseGameMode(self, player1, player2):
         if player1 == "Humain":
             if player2 != "Humain":
                 self.IA = IA.IA(self.player2, self)
-                self.delay = delay
-                # self.humainVSAi(self.player1, self.player2)
         else:
             if player2 == "Humain":
                 self.IA = IA.IA(self.player1, self)
-                self.delay = delay
-                # lancer AI vs humain
-                pass
             else:
                 self.IA1 = IA.IA(self.player1, self)
                 self.IA2 = IA.IA(self.player2, self)
-                self.delay = delay
-                # lancer AI vs AI
-                pass
 
     def getBoard(self):
         """
@@ -106,32 +98,6 @@ class Game:
         wonPlayer1 = self.board.detectWinner(self.player1, self.player2)
         wonPlayer2 = self.board.detectWinner(self.player2, self.player1)
         self.winner = wonPlayer1 + wonPlayer2
-
-    # def humainVSAi(self, currentPlayer, nextPlayer):
-        """
-        Joueur 1 est humain, joueur 2 est AI
-        Méthode récursive qui permet de jouer la partie. On commence par demander un mouvement au joueur, puis on le
-        vérifie. S'il est correct, on met à jour la liste de ses pions , le plateau du jeu et on fait jouer l'AI.
-        Ensuite, on détecte si un des joueurs a gagné la partie. Si non, la méthode est rappelée.
-        :return:
-        """
-        """move = Move.Move(currentPlayer, self.board)
-        if self.checkDiagonalMove(currentPlayer, move.getSource(), move.getDestination()) and self.checkForwardMove(
-                currentPlayer, move.getSource(), move.getDestination()):
-            currentPlayer.updatePosList(move.getSource(), move.getDestination(), nextPlayer.getPosList())
-            self.board.updateBoard(move.getSource(), move.getDestination(), currentPlayer)
-
-            self.detectWin()
-            if self.winner == 0:
-                try:
-                    self.IA.play(self)
-                    self.humainVSAi(currentPlayer, nextPlayer)
-                except AttributeError:  # si ai == None, on va obtenir une attribute error
-                    self.humainVSAi(nextPlayer, currentPlayer)
-
-        else:
-            print("Veuillez entrer une coordonnée valide:")
-            self.humainVSAi(currentPlayer, nextPlayer)"""
 
     def getMovablePegs(self, currentPlayer):
         if currentPlayer == "white":
