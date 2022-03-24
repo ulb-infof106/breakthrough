@@ -27,7 +27,6 @@ class IA:
         :return: le joueur que représente l'IA
         """
         return self.player
-
     def play(self, game):
         """
         Méthode qui permet de faire jouer l'IA, qui appelle la méthode Minimax et qui met à jour la liste des pions de
@@ -36,6 +35,7 @@ class IA:
         :return: aucun
         """
         move, score = self.Minimax(game, self.depth, True)
+        print(move, score)
         #game.getBoard().printBoard()
         game.getBoard().updateBoard(move[0], move[1], self.player)
         self.player.updatePosList(move[0], move[1], self.opponent.getPosList())

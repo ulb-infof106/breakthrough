@@ -2,7 +2,8 @@ import sys
 
 import Board
 import Game
-# todo : AI VS AI
+# todo: passer le code en renvue et nettoyage
+# todo : faire un meilleur checkwinner()
 from PyQt5.QtCore import Qt, QEventLoop, QTimer
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMessageBox, QDesktopWidget, QGroupBox, QFormLayout, \
     QLabel, QComboBox, QVBoxLayout, QSlider, QFileDialog, QGraphicsScene, QGraphicsView, \
@@ -121,7 +122,6 @@ class App(QWidget):
                             "pris en compte.")
             warning.exec_()
 
-
     def createScene(self):
         self.preview = QLabel("Aperçu")
         self.mainLayout.addWidget(self.preview)
@@ -218,12 +218,30 @@ class App(QWidget):
         self.scene.selectionChanged.connect(self.selectionHandler)
 
     def selectGameMode(self):
+        print("select game mode")
         if self.player1Type == "Humain" and self.player2Type == "Humain":
             self.humanVSHuman("white", "black")
         elif self.player1Type == "Humain" and self.player2Type == "Minimax":
             self.humanVSAI("white", "black")
         elif self.player1Type == "Minimax" and self.player2Type == "Humain":
             self.humanVSAI("white", "black")
+        else:
+            self.IAVSIA("white", "black")
+
+    def IAVSIA(self, currentPlayer, nextPlayer):
+        self.currentPlayer = currentPlayer
+        self.nextPlayer = nextPlayer
+        if self.currentPlayer == "white":
+            self.AIWait()
+            self.IAMakeMove(self.game.IA1)
+        else:
+            self.AIWait()
+            self.IAMakeMove(self.game.IA2)
+        winner = self.game.getWinner()
+        if winner != 0:
+            self.stopGame()
+        else:
+            self.IAVSIA(nextPlayer, currentPlayer)
 
     def humanVSAI(self, currentPlayer, nextPlayer):
         self.currentPlayer = currentPlayer
@@ -251,27 +269,30 @@ class App(QWidget):
 
     def AIWait(self):
         loop = QEventLoop()
-        QTimer.singleShot(self.delay*100, loop.quit)
+        QTimer.singleShot(self.delay * 100, loop.quit)
         loop.exec_()
 
-    def IAMakeMove(self):
+    def IAMakeMove(self, IA=None):
         # self.firstmove car on a besoin de savoir si c'est le premier move de l'ai pour qu'il continue à appeler
         # l'adversaire
-        move = self.game.IA.play(self.game)
+        if IA is None:
+            move = self.game.IA.play(self.game)
+        else:
+            move = IA.play(self.game)
         pegToMove = self.findPegToMove(move)
         destinationX, destinationY = self.movePeg(move, pegToMove)
         self.checkEatenPeg(destinationX, destinationY)
         self.moveCounter += 1
-        if self.moveCounter == 1:
+        if self.moveCounter == 1 and IA is None:
             self.humanVSAI(self.nextPlayer, self.currentPlayer)
 
     def checkEatenPeg(self, destinationX, destinationY):
-        if self.player1Type== "Humain":
-            for peg in self.whitePegs:
+        if self.currentPlayer == "white":
+            for peg in self.blackPegs:
                 if peg.scenePos().x() == destinationX and peg.scenePos().y() == destinationY:
                     self.scene.removeItem(peg)
         else:
-            for peg in self.blackPegs:
+            for peg in self.whitePegs:
                 if peg.scenePos().x() == destinationX and peg.scenePos().y() == destinationY:
                     self.scene.removeItem(peg)
 
@@ -288,11 +309,11 @@ class App(QWidget):
 
     def findPegToMove(self, move):
         pegToMove = None
-        if self.player2Type == "Minimax":
+        if self.player2Type == "Minimax" and self.currentPlayer == "black":
             for peg in self.blackPegs:
                 if int(peg.scenePos().y() // 80) == move[0][0] and int(peg.scenePos().x() // 80) == move[0][1]:
                     pegToMove = peg
-        elif self.player1Type == "Minimax":
+        elif self.player1Type == "Minimax" and self.currentPlayer == "white":
             for peg in self.whitePegs:
                 if int(peg.scenePos().y() // 80) == move[0][0] and int(peg.scenePos().x() // 80) == move[0][1]:
                     pegToMove = peg
@@ -307,7 +328,7 @@ class App(QWidget):
         self.initPegs()
 
     def selectionHandler(self):
-        #if not self.pegClicked:
+        # if not self.pegClicked:
         #
         if len(self.scene.selectedItems()) > 0:
             if type(self.scene.selectedItems()[0]) == QGraphicsEllipseItem:
