@@ -3,8 +3,6 @@ import sys
 import Board
 import Game
 # todo : AI VS AI
-# todo : AI vs humain
-# todo: si humain gagne, fin détectée après que l'ai ait joué
 from PyQt5.QtCore import Qt, QEventLoop, QTimer
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMessageBox, QDesktopWidget, QGroupBox, QFormLayout, \
     QLabel, QComboBox, QVBoxLayout, QSlider, QFileDialog, QGraphicsScene, QGraphicsView, \
@@ -24,6 +22,7 @@ class App(QWidget):
         self.blackPegs = []
         self.whitePegs = []
         self.positions = []
+        self.moveCounter = 0
         self.mainLayout = QVBoxLayout()
         self.parametersBox = QGroupBox("Paramètres")
         self.importBox = QGroupBox("Import du plateau")
@@ -45,7 +44,7 @@ class App(QWidget):
         screen = app.primaryScreen()
         width = screen.size().width()
         height = screen.size().height()
-        self.resize(int(width / 1.5), int(height / 1.5))
+        self.resize(int(width / 1.2), int(height / 1.2))
         self.centerWindow()
 
     def setMainLayout(self):
@@ -208,6 +207,7 @@ class App(QWidget):
 
     def play(self):
         self.refreshScene()
+        self.moveCounter = 0
         self.playing = True
         self.delay = self.AISlider.value()
         self.createStopButton()
@@ -222,11 +222,27 @@ class App(QWidget):
             self.humanVSHuman("white", "black")
         elif self.player1Type == "Humain" and self.player2Type == "Minimax":
             self.humanVSAI("white", "black")
+        elif self.player1Type == "Minimax" and self.player2Type == "Humain":
+            self.humanVSAI("white", "black")
 
     def humanVSAI(self, currentPlayer, nextPlayer):
         self.currentPlayer = currentPlayer
         self.nextPlayer = nextPlayer
         if self.currentPlayer == "white":
+            self.whiteProcessing(currentPlayer)
+        else:
+            self.blackProcessing(currentPlayer)
+
+    def blackProcessing(self, currentPlayer):
+        if self.player2Type == "Humain":
+            movablePegs = self.game.getMovablePegs(currentPlayer)
+            self.unlockBlackPegs(movablePegs)
+        else:
+            self.AIWait()
+            self.IAMakeMove()
+
+    def whiteProcessing(self, currentPlayer):
+        if self.player1Type == "Humain":
             movablePegs = self.game.getMovablePegs(currentPlayer)
             self.unlockWhitePegs(movablePegs)
         else:
@@ -239,15 +255,25 @@ class App(QWidget):
         loop.exec_()
 
     def IAMakeMove(self):
+        # self.firstmove car on a besoin de savoir si c'est le premier move de l'ai pour qu'il continue à appeler
+        # l'adversaire
         move = self.game.IA.play(self.game)
         pegToMove = self.findPegToMove(move)
         destinationX, destinationY = self.movePeg(move, pegToMove)
         self.checkEatenPeg(destinationX, destinationY)
+        self.moveCounter += 1
+        if self.moveCounter == 1:
+            self.humanVSAI(self.nextPlayer, self.currentPlayer)
 
     def checkEatenPeg(self, destinationX, destinationY):
-        for peg in self.whitePegs:
-            if peg.scenePos().x() == destinationX and peg.scenePos().y() == destinationY:
-                self.scene.removeItem(peg)
+        if self.player1Type== "Humain":
+            for peg in self.whitePegs:
+                if peg.scenePos().x() == destinationX and peg.scenePos().y() == destinationY:
+                    self.scene.removeItem(peg)
+        else:
+            for peg in self.blackPegs:
+                if peg.scenePos().x() == destinationX and peg.scenePos().y() == destinationY:
+                    self.scene.removeItem(peg)
 
     def movePeg(self, move, pegToMove):
         destinationX = None
@@ -262,9 +288,14 @@ class App(QWidget):
 
     def findPegToMove(self, move):
         pegToMove = None
-        for peg in self.blackPegs:
-            if int(peg.scenePos().y() // 80) == move[0][0] and int(peg.scenePos().x() // 80) == move[0][1]:
-                pegToMove = peg
+        if self.player2Type == "Minimax":
+            for peg in self.blackPegs:
+                if int(peg.scenePos().y() // 80) == move[0][0] and int(peg.scenePos().x() // 80) == move[0][1]:
+                    pegToMove = peg
+        elif self.player1Type == "Minimax":
+            for peg in self.whitePegs:
+                if int(peg.scenePos().y() // 80) == move[0][0] and int(peg.scenePos().x() // 80) == move[0][1]:
+                    pegToMove = peg
         return pegToMove
 
     def refreshScene(self):
@@ -289,12 +320,17 @@ class App(QWidget):
         # si on clique sur une case après avoir cliqué sur un pion, il faut bloquer tous les autres pions et toutes les
         # autres cases disponibles pour ces pions précédents
         self.selectPos()
-        self.lockPreviousPegs()
-        self.lockPreviousDestinations()
-        self.eatPeg()
-        self.pegClicked = False
-        if self.player1Type == "Humain" and self.player2Type == "Minimax":
-            self.humanVSAI(self.nextPlayer, self.currentPlayer)
+        winner = self.game.getWinner()
+        if winner != 0:
+            self.stopGame()
+        else:
+            self.lockPreviousPegs()
+            self.lockPreviousDestinations()
+            self.eatPeg()
+            self.pegClicked = False
+            if (self.player1Type == "Humain" and self.player2Type == "Minimax") or \
+                    (self.player1Type == "Minimax" and self.player2Type == "Humain"):
+                self.humanVSAI(self.nextPlayer, self.currentPlayer)
 
     def pegHandler(self):
         # si on clique sur un pion après avoir cliqué sur un pion, il faut bloquer tous les mouvements du pion précédent
@@ -337,6 +373,7 @@ class App(QWidget):
             if validMove:
                 self.selectedPeg.setPos(self.selectedPos.scenePos().x() + 15,
                                         self.selectedPos.scenePos().y() + 15)
+                self.moveCounter += 1
             else:
                 invalidMove = QMessageBox()
                 invalidMove.setWindowTitle("Mouvement invalide")

@@ -29,7 +29,7 @@ class Game:
 
     def chooseGameMode(self, player1, player2):
         if player1 == "Humain":
-            if player2 != "Humain":
+            if player2 == "Minimax":
                 self.IA = IA.IA(self.player2, self)
         else:
             if player2 == "Humain":
