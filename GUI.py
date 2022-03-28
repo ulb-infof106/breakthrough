@@ -4,6 +4,7 @@ import Board
 import Game
 # todo: passer le code en renvue et nettoyage
 # todo : faire un meilleur checkwinner()
+# todo : changer les variables magiques
 from PyQt5.QtCore import Qt, QEventLoop, QTimer
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMessageBox, QDesktopWidget, QGroupBox, QFormLayout, \
     QLabel, QComboBox, QVBoxLayout, QSlider, QFileDialog, QGraphicsScene, QGraphicsView, \

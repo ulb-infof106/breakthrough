@@ -35,7 +35,6 @@ class IA:
         :return: aucun
         """
         move, score = self.Minimax(game, self.depth, True)
-        print(move, score)
         #game.getBoard().printBoard()
         game.getBoard().updateBoard(move[0], move[1], self.player)
         self.player.updatePosList(move[0], move[1], self.opponent.getPosList())

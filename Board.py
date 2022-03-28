@@ -13,25 +13,43 @@ class Board:
     Classe qui représente le plateau du jeu
     """
 
-    def __init__(self, file):
+    def __init__(self, file, board=None):
         """
         Constructeur de la classe du plateau du jeu. Si un fichier a été donné en entrée, le plateau est
         initialisé selon son contenu, sinon, un plateau de base est crée.
         :param file: Fichier reçu en entrée.
         """
         self.board = []
-        try:
-            with open(file) as f:
-                line = f.readlines()
-            self.lineDimension = int(line[0].rstrip("\n").strip(" ")[0])
-            self.columnDimension = int(line[0].rstrip("\n").strip(" ")[2])
-            for i in range(self.lineDimension):
-                self.board.append([0 for i in range(self.columnDimension)])
 
-            self.placeOnBoard(line[1], 1)
-            self.placeOnBoard(line[2], 2)
+        try:
+            self.createFileBoard(file)
         except TypeError:
-            self.setDefaultBoard()
+            if board:
+                self.createGivenBoard(board)
+            else:
+                self.setDefaultBoard()
+
+    def createGivenBoard(self, board):
+        self.copyBoard(board)
+        self.lineDimension = len(board)
+        self.columnDimension = len(board[0])
+
+    def createFileBoard(self, file):
+        with open(file) as f:
+            line = f.readlines()
+        self.lineDimension = int(line[0].rstrip("\n").strip(" ")[0])
+        self.columnDimension = int(line[0].rstrip("\n").strip(" ")[2])
+        for i in range(self.lineDimension):
+            self.board.append([0 for i in range(self.columnDimension)])
+        self.placeOnBoard(line[1], 1)
+        self.placeOnBoard(line[2], 2)
+
+    def copyBoard(self, board):
+        for i in range(len(board)):
+            for j in range(len(board[0])):
+                pass
+                #self.board.append(line)
+
 
     def getlineDimension(self):
 
