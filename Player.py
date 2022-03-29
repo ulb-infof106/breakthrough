@@ -53,14 +53,14 @@ class Player:
         """
         sourcePos = list(sourcePos)
         destinationPos = list(destinationPos)
+
         self.posList.remove(sourcePos)
         self.posList.append(destinationPos)
 
-        try:
+        if destinationPos in nextPlayerPosList:
             nextPlayerPosList.remove(destinationPos)
             return destinationPos
-        except ValueError:
-            return
+        return
 
     def getPosList(self):
         """

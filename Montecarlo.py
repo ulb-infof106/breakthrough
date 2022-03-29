@@ -1,4 +1,4 @@
-# étape 1: construire l'arbre de la partie
+# étape 2: implémenter
 import sys
 
 import Utils
@@ -8,61 +8,60 @@ import Game
 
 class Node:
     # représente un état de jeu
-    def __init__(self, board, player, opponent):
+    def __init__(self, board, player, opponent, root=None):
         self.board = board
         self.children = []
         self.player = player
         self.opponent = opponent
+        if root:
+            root.children.append(self)
+        self.setChildren()
 
     def setChildren(self):
         childrenBoards = self.findChildrenBoards()
-
-        for board in childrenBoards:
-            noeud = Node(board, self.opponent, self.player)
-            self.children.append(noeud)
+        if len(childrenBoards) != 0:
+            for board in childrenBoards:
+                if board.findWinner() == 0:
+                    Node(board, self.opponent, self.player, self)
 
     def findChildrenBoards(self):
         childrenBoards = []
-        possibleSourceMoves = Utils.findPossibleSources(self.board, self.player)
+        possibleSourceMoves = Utils.findBoardSources(self.board, self.player)
         for source in possibleSourceMoves:
             possibleDestinationMoves = Utils.findPossibleDestinations(source, self.board, self.player)
             for destination in possibleDestinationMoves:
-                deletedPeg = self.simulateMove(source, destination)
-                board = Board.Board(None, self.board.getBoard())
-                childrenBoards.append(board)
-                self.undoMove(deletedPeg, source, destination)
+                self.simulateMove(childrenBoards, destination, source)
         return childrenBoards
 
-    def simulateMove(self, source, dest):
-        self.board.updateBoard(source, dest, self.player)
-        deletedPeg = self.player.updatePosList(source, dest, self.opponent.getPosList())
-        winPlayer1 = self.board.detectWinner(self.player, self.opponent)
-        winPlayer2 = self.board.detectWinner(self.opponent, self.player)
-        # game.winner = winPlayer2 + winPlayer1
+    def simulateMove(self, childrenBoards, destination, source):
+        deletedPeg = self.makeMove(source, destination)
+        board = Board.Board(None, self.board.getBoard())
+        childrenBoards.append(board)
+        self.undoMove(deletedPeg, source, destination)
+
+    def makeMove(self, source, dest):
+        deletedPeg = self.board.updateBoard(source, dest, self.player)
         return deletedPeg
 
     def undoMove(self, deletedPeg, source, dest):
 
-        if deletedPeg:
-            self.opponent.getPosList().append(deletedPeg)
+        if deletedPeg != 0:
             self.board.updateBoard(dest, source, self.player, True)
         else:
             self.board.updateBoard(dest, source, self.player, False)
-        self.player.updatePosList(dest, source, self.opponent.getPosList())
-        # game.winner = game.getBoard().detectWinner(game.player1, game.player2)
 
 
 class Tree:
     def __init__(self, game):
         self.root = Node(game.board, game.player1, game.player2)
+        for child in self.root.children:
+            child.board.printBoard()
 
 
 boardGame = Board.Board(sys.argv[1])
 startGame = Game.Game("Humain", "Humain", boardGame)
 monteCarlo = Tree(startGame)
-monteCarlo.root.setChildren()
-for child in monteCarlo.root.children:
-    print(child.board.getBoard())
+# monteCarlo.root.setChildren()
 # informations sur les noeuds:
 # - après rétropropagation, le noeud d'où la simulation a démarré est marqué comme visité
 # - 2 statistiques pour un noeud v:

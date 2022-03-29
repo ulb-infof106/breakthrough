@@ -24,6 +24,7 @@ def checkPos(board, move, playerID):
     :param move : mouvement choisi
     :return:
     """
+
     if board.getBoard()[move[0]][move[1]] == playerID and playerID == 1:
         return checkPosPlayer1(board, move)
     if board.getBoard()[move[0]][move[1]] == playerID and playerID == 2:
@@ -244,6 +245,24 @@ def inputUser(board):
         except ValueError:
             print("Veuillez respecter les règles d'encodage")
             move = input("Veuillez sélectionner une case où placer votre pion: ")
+
+
+def findBoardSources(board, player):
+    validSources = []
+    pegs = findPegs(board, player)
+    for sourcePos in pegs:
+        if checkPos(board,sourcePos, player.getPlayerID()):
+            validSources.append(sourcePos)
+    return validSources
+
+
+def findPegs(board, player):
+    pegs = []
+    for i in range(len(board.getBoard())):
+        for j in range(len(board.getBoard()[0])):
+            if board.getBoard()[i][j] == player.getPlayerID():
+                pegs.append([i, j])
+    return pegs
 
 
 def findPossibleSources(board, player):

@@ -23,6 +23,7 @@ class Board:
 
         try:
             self.createFileBoard(file)
+            self.printBoard()
         except TypeError:
             if board:
                 self.createGivenBoard(board)
@@ -46,10 +47,14 @@ class Board:
 
     def copyBoard(self, board):
         for i in range(len(board)):
+            self.board.append([])
             for j in range(len(board[0])):
-                pass
-                #self.board.append(line)
-
+                if board[i][j] == 0:
+                    self.board[i].append(0)
+                elif board[i][j] == 1:
+                    self.board[i].append(1)
+                elif board[i][j] == 2:
+                    self.board[i].append(2)
 
     def getlineDimension(self):
 
@@ -177,9 +182,12 @@ class Board:
         :param sourcePos: position source du mouvement
         :param destinationpos: position de destination du mouvement
         :param player: joueur actuel
-        :return:
+        :return: pion mangé
         """
+        eatenPeg = 0
         if not backwards:
+            if self.board[destinationpos[0]][destinationpos[1]] != 0:
+                eatenPeg = self.board[destinationpos[0]][destinationpos[1]]
             self.board[sourcePos[0]][sourcePos[1]] = 0
             self.board[destinationpos[0]][destinationpos[1]] = player.getPlayerID()
         else:
@@ -189,3 +197,26 @@ class Board:
             else:
                 self.board[sourcePos[0]][sourcePos[1]] = 2
                 self.board[destinationpos[0]][destinationpos[1]] = player.getPlayerID()
+        return eatenPeg
+
+    def findWinner(self):
+        counter1, counter2 = self.findCounter()
+        if counter1 == 0:
+            return 2
+        elif counter2 == 0:
+            return 1
+        elif 1 in self.board[0]:
+            return 1
+        elif 2 in self.board[self.lineDimension - 1]:
+            return 2
+        return 0
+
+    def findCounter(self):
+        counter1 = 0
+        counter2 = 0
+        for i in range(self.lineDimension):
+            if 2 in self.board[i]:
+                counter2 += 1
+            if 1 in self.board[i]:
+                counter1 += 1
+        return counter1, counter2
