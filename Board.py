@@ -31,9 +31,9 @@ class Board:
                 self.setDefaultBoard()
 
     def createGivenBoard(self, board):
-        self.copyBoard(board)
         self.lineDimension = len(board)
         self.columnDimension = len(board[0])
+        self.copyBoard(board)
 
     def createFileBoard(self, file):
         with open(file) as f:
