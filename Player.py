@@ -53,8 +53,8 @@ class Player:
         """
         sourcePos = list(sourcePos)
         destinationPos = list(destinationPos)
-
-        self.posList.remove(sourcePos)
+        if sourcePos in self.posList:
+            self.posList.remove(sourcePos)
         self.posList.append(destinationPos)
 
         if destinationPos in nextPlayerPosList:

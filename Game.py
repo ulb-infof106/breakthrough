@@ -7,7 +7,7 @@ Section: BA3 INFO
 
 import Player
 import Move
-import IA
+import Montecarlo
 import Utils
 
 
@@ -30,13 +30,13 @@ class Game:
     def chooseGameMode(self, player1, player2):
         if player1 == "Humain":
             if player2 == "Minimax":
-                self.IA = IA.IA(self.player2, self)
+                self.IA = Montecarlo.Tree(self.player2, self)
         else:
             if player2 == "Humain":
-                self.IA = IA.IA(self.player1, self)
+                self.IA = Montecarlo.Tree(self.player1, self)
             else:
-                self.IA1 = IA.IA(self.player1, self)
-                self.IA2 = IA.IA(self.player2, self)
+                self.IA1 = Montecarlo.Tree(self.player1, self)
+                self.IA2 = Montecarlo.Tree(self.player2, self)
 
     def getBoard(self):
         """

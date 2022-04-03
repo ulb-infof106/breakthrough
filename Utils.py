@@ -7,7 +7,7 @@ Section: BA3 INFO
 import random
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPen, QColor
+from PyQt5.QtGui import QPen, QColor, QBrush
 from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsItem
 
 """
@@ -251,7 +251,7 @@ def findBoardSources(board, player):
     validSources = []
     pegs = findPegs(board, player)
     for sourcePos in pegs:
-        if checkPos(board,sourcePos, player.getPlayerID()):
+        if checkPos(board, sourcePos, player.getPlayerID()):
             validSources.append(sourcePos)
     return validSources
 
@@ -317,3 +317,34 @@ def selectedPegContour(i, item, movablePegs):
         pen = QPen(Qt.blue)
         pen.setWidth(3)
         item.setPen(pen)
+
+
+def findMove(board1, board2):
+    move = []
+    temp = []
+    for i in range(len(board1)):
+        if board1[i] != board2[i]:
+            for j in range(len(board1[i])):
+                if board1[i][j] != board2[i][j]:
+                    temp.append([i, j])
+    print(temp)
+    if board1[temp[0][0]][temp[0][1]] == 0:
+        move.append(temp[1])
+        move.append(temp[0])
+    else:
+        move = temp
+    return move
+
+
+def initColorPeg(i, j):
+    if i % 2 == 0:
+        if j % 2 == 0:
+            brush = QBrush(QColor(252, 204, 116))
+        else:
+            brush = QBrush(QColor(138, 120, 93))
+    else:
+        if j % 2 == 0:
+            brush = QBrush(QColor(138, 120, 93))
+        else:
+            brush = QBrush(QColor(252, 204, 116))
+    return brush

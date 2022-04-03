@@ -1,12 +1,12 @@
- # question : si plusieurs noeuds ont la même valeur UTC, itérer sur tous les noeuds de même valeur?
+# question : si plusieurs noeuds ont la même valeur UTC, itérer sur tous les noeuds de même valeur?
 import math
 import random
-import sys
+from operator import attrgetter
 
 import Utils
 import Board
-import Game
 
+# todo : fix le beug de quand on lance l'ai 2x d'affilée ya un beug
 
 class GameState:
     # structure qui représente un état de jeu inclus dans un node
@@ -15,6 +15,7 @@ class GameState:
         self.player = player
         self.opponent = opponent
         self.winner = winner
+
 
 class Node:
     # représente un état de jeu
@@ -44,7 +45,8 @@ class Node:
         childrenBoards = []
         possibleSourceMoves = Utils.findBoardSources(self.gameState.board, self.gameState.player)
         for source in possibleSourceMoves:
-            possibleDestinationMoves = Utils.findPossibleDestinations(source, self.gameState.board, self.gameState.player)
+            possibleDestinationMoves = Utils.findPossibleDestinations(source, self.gameState.board,
+                                                                      self.gameState.player)
             for destination in possibleDestinationMoves:
                 self.simulateMove(childrenBoards, destination, source)
         return childrenBoards
@@ -68,14 +70,26 @@ class Node:
 
 
 class Tree:
-    def __init__(self, game):
-        self.playerID = 1
+    def __init__(self, player, game):
+        self.playerID = player.getPlayerID()
         self.c = 1.4
-        # get playerID with game later
         gameState = GameState(game.board, game.player1, game.player2)
 
         self.root = Node(gameState)
         self.searchTree(self.root)
+        # self.move = self.selectMove(self.root)
+
+    def setRoot(self, board):
+        board.printBoard()
+        for child in self.root.children:
+            if child.gameState.board.getBoard() == board.getBoard():
+                self.root = child
+
+    def selectMove(self):
+        child = max(self.root.children, key=attrgetter('counter'))
+        move = Utils.findMove(self.root.gameState.board.getBoard(), child.gameState.board.getBoard())
+        self.root = child
+        return move
 
     def searchTree(self, node):
         for child in node.children:
@@ -118,17 +132,17 @@ class Tree:
 
     def computeUTC(self, node):
         for child in node.children:
-            div = math.log(node.counter)/child.counter
+            div = math.log(node.counter) / child.counter
             child.UTC = (child.simulationRes / child.counter) + (self.c * math.sqrt(div))
 
     def choseChild(self, node):
         res = None
-        max = -1000
+        maximum = -1000
         if len(node.children) > 0:
             for child in node.children:
-                if child.UTC >= max:
+                if child.UTC >= maximum:
                     if not child.fullyDeveloped:
-                        max = child.UTC
+                        maximum = child.UTC
                         res = child
                     else:
                         res = self.choseChild(child)
@@ -147,9 +161,9 @@ class Tree:
             self.printTree(child)
 
 
-boardGame = Board.Board(sys.argv[1])
-startGame = Game.Game("Humain", "Humain", boardGame)
-monteCarlo = Tree(startGame)
+# boardGame = Board.Board(sys.argv[1])
+# startGame = Game.Game("Minimax", "Humain", boardGame)
+# monteCarlo = Tree(startGame.player1, startGame)
 
 # informations sur l'arbre:
 # - une simulation commence toujours au noeud qui n’a pas encore été visité précédemment

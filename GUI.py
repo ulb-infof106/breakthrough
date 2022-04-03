@@ -79,7 +79,7 @@ class App(QWidget):
 
         layout.addRow(QLabel("Joueur 1:"), self.comboPlayer1)
         layout.addRow(QLabel("Joueur 2:"), self.comboPlayer2)
-        layout.addRow(QLabel("Délai de l'IA (en secondes):"), self.AILevel)
+        layout.addRow(QLabel("Délai de l'IA (en secondes):"), self.AITimer)
         layout.addWidget(self.AISlider)
 
         self.parametersBox.setLayout(layout)
@@ -99,22 +99,22 @@ class App(QWidget):
         self.AISlider.setMaximum(20)
         self.AISlider.setMinimum(0)
         self.AISlider.setSingleStep(1)
-        self.AISlider.valueChanged.connect(self.updateAILevel)
-        self.AILevel = QLabel("0")
+        self.AISlider.valueChanged.connect(self.updateAITimer)
+        self.AITimer = QLabel("0")
 
-    def updateAILevel(self):
-        self.AILevel.setText(str(self.AISlider.value() / 10))
+    def updateAITimer(self):
+        self.AITimer.setText(str(self.AISlider.value() / 10))
         self.delay = self.AISlider.value()
 
     def updatePlayers(self):
         if not self.playing:
             if self.comboPlayer1.currentText() == "Humain" and self.comboPlayer2.currentText() == "Humain":
                 self.AISlider.hide()
-                self.AILevel.setText("L'IA ne jouera pas si les deux joueurs sont humains.")
+                self.AITimer.setText("L'IA ne jouera pas si les deux joueurs sont humains.")
                 self.AISlider.setValue(-1)
 
             else:
-                self.AILevel.setText(str(self.AISlider.value() / 10))
+                self.AITimer.setText(str(self.AISlider.value() / 10))
                 self.AISlider.show()
         else:
             warning = QMessageBox()
@@ -172,16 +172,7 @@ class App(QWidget):
             for j in range(self.board.getColumnDimension()):
                 rect = QGraphicsRectItem(0, 0, 80, 80)
                 rect.setPos(80 * i, 80 * j)
-                if i % 2 == 0:
-                    if j % 2 == 0:
-                        brush = QBrush(QColor(252, 204, 116))
-                    else:
-                        brush = QBrush(QColor(138, 120, 93))
-                else:
-                    if j % 2 == 0:
-                        brush = QBrush(QColor(138, 120, 93))
-                    else:
-                        brush = QBrush(QColor(252, 204, 116))
+                brush = Utils.initColorPeg(i, j)
                 rect.setBrush(brush)
                 Utils.squareContour(rect)
                 self.scene.addItem(rect)
@@ -219,7 +210,6 @@ class App(QWidget):
         self.scene.selectionChanged.connect(self.selectionHandler)
 
     def selectGameMode(self):
-        print("select game mode")
         if self.player1Type == "Humain" and self.player2Type == "Humain":
             self.humanVSHuman("white", "black")
         elif self.player1Type == "Humain" and self.player2Type == "Minimax":
@@ -227,9 +217,9 @@ class App(QWidget):
         elif self.player1Type == "Minimax" and self.player2Type == "Humain":
             self.humanVSAI("white", "black")
         else:
-            self.IAVSIA("white", "black")
+            self.AIVSAI("white", "black")
 
-    def IAVSIA(self, currentPlayer, nextPlayer):
+    def AIVSAI(self, currentPlayer, nextPlayer):
         self.currentPlayer = currentPlayer
         self.nextPlayer = nextPlayer
         if self.currentPlayer == "white":
@@ -240,9 +230,9 @@ class App(QWidget):
             self.IAMakeMove(self.game.IA2)
         winner = self.game.getWinner()
         if winner != 0:
-            self.stopGame()
+            self.displayWinner(winner)
         else:
-            self.IAVSIA(nextPlayer, currentPlayer)
+            self.AIVSAI(nextPlayer, currentPlayer)
 
     def humanVSAI(self, currentPlayer, nextPlayer):
         self.currentPlayer = currentPlayer
@@ -276,16 +266,30 @@ class App(QWidget):
     def IAMakeMove(self, IA=None):
         # self.firstmove car on a besoin de savoir si c'est le premier move de l'ai pour qu'il continue à appeler
         # l'adversaire
-        if IA is None:
-            move = self.game.IA.play(self.game)
-        else:
-            move = IA.play(self.game)
+
+        move = self.IASelectMove(IA)
         pegToMove = self.findPegToMove(move)
         destinationX, destinationY = self.movePeg(move, pegToMove)
         self.checkEatenPeg(destinationX, destinationY)
+        self.game.makeMove(self.currentPlayer, move[0], move[1])
+        self.IASetRoot(IA)
         self.moveCounter += 1
         if self.moveCounter == 1 and IA is None:
             self.humanVSAI(self.nextPlayer, self.currentPlayer)
+
+    def IASetRoot(self, IA):
+        if IA is None:
+            self.game.IA.setRoot(self.game.board)
+        else:
+            IA.setRoot(self.game.board)
+
+    def IASelectMove(self, IA):
+        if IA is None:
+
+            move = self.game.IA.selectMove()
+        else:
+            move = IA.selectMove()
+        return move
 
     def checkEatenPeg(self, destinationX, destinationY):
         if self.currentPlayer == "white":
@@ -342,6 +346,7 @@ class App(QWidget):
         # si on clique sur une case après avoir cliqué sur un pion, il faut bloquer tous les autres pions et toutes les
         # autres cases disponibles pour ces pions précédents
         self.selectPos()
+        self.game.IA.setRoot(self.game.board)
         winner = self.game.getWinner()
         if winner != 0:
             self.stopGame()
@@ -367,18 +372,20 @@ class App(QWidget):
         if winner == 0:
             self.humanVSHuman(self.nextPlayer, self.currentPlayer)
         else:
-            if winner == 1:
-                win = QMessageBox()
-                win.setWindowTitle("Gagné!")
-                win.setText("Le joueur blanc a gagné!")
-                win.exec_()
-            else:
-                win = QMessageBox()
-                win.setWindowTitle("Gagné!")
-                win.setText("Le joueur noir a gagné!")
-                win.exec_()
+            self.displayWinner(winner)
 
-            self.stopGame()
+    def displayWinner(self, winner):
+        if winner == 1:
+            win = QMessageBox()
+            win.setWindowTitle("Gagné!")
+            win.setText("Le joueur blanc a gagné!")
+            win.exec_()
+        else:
+            win = QMessageBox()
+            win.setWindowTitle("Gagné!")
+            win.setText("Le joueur noir a gagné!")
+            win.exec_()
+        self.stopGame()
 
     def lockPreviousPegs(self):
         for item in self.scene.items():
