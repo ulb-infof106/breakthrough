@@ -23,7 +23,6 @@ class Board:
 
         try:
             self.createFileBoard(file)
-            self.printBoard()
         except TypeError:
             if board:
                 self.createGivenBoard(board)
@@ -99,12 +98,7 @@ class Board:
             lineCoord, columnCoord = Utils.extractPosition(self.lineDimension, i)
             self.board[lineCoord][columnCoord] = player
 
-    def printBoard(self):
-        """
-        Méthode qui se charge de  l'affichage du plateau: on affiche les contours ainsi que les coordonnées des lignes
-        et colonnes, et on remplace les 2,1 et 0 par leurs symboles respectifs
-        :return: aucun
-        """
+    """def printBoard(self):
         alphabet = "abcdefghijklmnopqrstuvwxyz"
         print(" " * 3 + self.columnDimension * " —")
         for line in range(self.lineDimension):
@@ -121,34 +115,7 @@ class Board:
         print(" " * 3, end="")
         for i in range(self.columnDimension):
             print(" " + alphabet[i], end="")
-        print("\n")
-
-    def displayProposedMove(self, move):
-        """
-        Méthode qui permet d'afficher le plateau avec le coup suggéré au joueur.
-        On imprime la matrice normalement, sauf à l'endroit précisé par move où on imprime un #
-        :param move: coup suggéré
-        :return: aucun
-        """
-        alphabet = "abcdefghijklmnopqrstuvwxyz"
-        print(" " * 3 + self.columnDimension * " —")
-        for line in range(self.lineDimension):
-            print(str(-(line - self.lineDimension)) + " | ", end="")
-            for column in range(self.columnDimension):
-                if move and line == move[0] and column == move[1]:
-                    print("#", end=" ")
-                elif self.board[line][column] == 0:
-                    print(".", end=" ")
-                elif self.board[line][column] == 1:
-                    print("W", end=" ")
-                elif self.board[line][column] == 2:
-                    print("B", end=" ")
-            print("|")
-        print(" " * 3 + self.columnDimension * " —")
-        print(" " * 3, end="")
-        for i in range(self.columnDimension):
-            print(" " + alphabet[i], end="")
-        print("\n")
+        print("\n")"""
 
     def detectWinner(self, player, nextPlayer):
         """
@@ -186,17 +153,24 @@ class Board:
         """
         eatenPeg = 0
         if not backwards:
-            if self.board[destinationpos[0]][destinationpos[1]] != 0:
-                eatenPeg = self.board[destinationpos[0]][destinationpos[1]]
-            self.board[sourcePos[0]][sourcePos[1]] = 0
+            eatenPeg = self.forwardUpdate(destinationpos, eatenPeg, player, sourcePos)
+        else:
+            self.backwardsUpdate(destinationpos, player, sourcePos)
+        return eatenPeg
+
+    def backwardsUpdate(self, destinationpos, player, sourcePos):
+        if player.getPlayerID() == 2:
+            self.board[sourcePos[0]][sourcePos[1]] = 1
             self.board[destinationpos[0]][destinationpos[1]] = player.getPlayerID()
         else:
-            if player.getPlayerID() == 2:
-                self.board[sourcePos[0]][sourcePos[1]] = 1
-                self.board[destinationpos[0]][destinationpos[1]] = player.getPlayerID()
-            else:
-                self.board[sourcePos[0]][sourcePos[1]] = 2
-                self.board[destinationpos[0]][destinationpos[1]] = player.getPlayerID()
+            self.board[sourcePos[0]][sourcePos[1]] = 2
+            self.board[destinationpos[0]][destinationpos[1]] = player.getPlayerID()
+
+    def forwardUpdate(self, destinationpos, eatenPeg, player, sourcePos):
+        if self.board[destinationpos[0]][destinationpos[1]] != 0:
+            eatenPeg = self.board[destinationpos[0]][destinationpos[1]]
+        self.board[sourcePos[0]][sourcePos[1]] = 0
+        self.board[destinationpos[0]][destinationpos[1]] = player.getPlayerID()
         return eatenPeg
 
     def findWinner(self):

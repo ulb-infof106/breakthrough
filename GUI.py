@@ -9,7 +9,7 @@ from PyQt5.QtCore import Qt, QEventLoop, QTimer
 from PyQt5.QtWidgets import QApplication, QWidget, QPushButton, QMessageBox, QDesktopWidget, QGroupBox, QFormLayout, \
     QLabel, QComboBox, QVBoxLayout, QSlider, QFileDialog, QGraphicsScene, QGraphicsView, \
     QGraphicsRectItem, QGraphicsEllipseItem, QGraphicsItem
-from PyQt5.QtGui import QBrush, QPen, QColor
+from PyQt5.QtGui import QBrush, QPen
 import Utils
 
 
@@ -212,12 +212,10 @@ class App(QWidget):
     def selectGameMode(self):
         if self.player1Type == "Humain" and self.player2Type == "Humain":
             self.humanVSHuman("white", "black")
-        elif self.player1Type == "Humain" and self.player2Type == "Minimax":
-            self.humanVSAI("white", "black")
-        elif self.player1Type == "Minimax" and self.player2Type == "Humain":
-            self.humanVSAI("white", "black")
-        else:
+        elif self.player1Type == "Minimax" and self.player2Type == "Minimax":
             self.AIVSAI("white", "black")
+        else:
+            self.humanVSAI("white", "black")
 
     def AIVSAI(self, currentPlayer, nextPlayer):
         self.currentPlayer = currentPlayer
@@ -268,14 +266,17 @@ class App(QWidget):
         # l'adversaire
 
         move = self.IASelectMove(IA)
-        pegToMove = self.findPegToMove(move)
-        destinationX, destinationY = self.movePeg(move, pegToMove)
-        self.checkEatenPeg(destinationX, destinationY)
-        self.game.makeMove(self.currentPlayer, move[0], move[1])
-        self.IASetRoot(IA)
-        self.moveCounter += 1
-        if self.moveCounter == 1 and IA is None:
-            self.humanVSAI(self.nextPlayer, self.currentPlayer)
+        if not move:
+            self.stopGame()
+        else:
+            pegToMove = self.findPegToMove(move)
+            destinationX, destinationY = self.movePeg(move, pegToMove)
+            self.checkEatenPeg(destinationX, destinationY)
+            self.game.makeMove(self.currentPlayer, move[0], move[1])
+            self.IASetRoot(IA)
+            self.moveCounter += 1
+            if self.moveCounter == 1 and IA is None:
+                self.humanVSAI(self.nextPlayer, self.currentPlayer)
 
     def IASetRoot(self, IA):
         if IA is None:
