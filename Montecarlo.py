@@ -150,3 +150,10 @@ class Tree:
                     else:
                         res = self.choseChild(child)
         return res
+
+
+# faut il mettre un timer pour l'élaboration de l'arbre? ou juste pour les coups que l'AI effectue?
+# question: il faut bien faire un arbre avec absolument tous les coups possibles? Parce qu'avec une dimension de 3
+# ou de 4 pour le plateau ça va encore, mais si les dimensions sont plus grandes, l'arbre prend une éternité pour
+# se construire, mais les coups restent très rapides
+# autre question: est ce que les timers sont valables quand le mode est ai vs ai?

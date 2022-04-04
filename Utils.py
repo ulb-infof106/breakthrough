@@ -7,7 +7,7 @@ Section: BA3 INFO
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtGui import QPen, QColor, QBrush
-from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsItem
+from PyQt5.QtWidgets import QGraphicsEllipseItem, QGraphicsItem, QMessageBox
 
 """
 Fichier contenant des fonctions utilitaires
@@ -242,3 +242,10 @@ def initColorPeg(i, j):
         else:
             brush = QBrush(QColor(252, 204, 116))
     return brush
+
+
+def errorMessage():
+    error = QMessageBox()
+    error.setWindowTitle("Erreur")
+    error.setText("Veuillez sélectionner un fichier .txt")
+    error.exec_()

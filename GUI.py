@@ -1,4 +1,5 @@
 import sys
+import time
 
 import Board
 import Game
@@ -46,7 +47,7 @@ class App(QWidget):
         screen = app.primaryScreen()
         width = screen.size().width()
         height = screen.size().height()
-        self.resize(int(width / 1.2), int(height / 1.2))
+        self.resize(int(width / 1.4), int(height / 1.4))
         self.centerWindow()
 
     def setMainLayout(self):
@@ -74,14 +75,16 @@ class App(QWidget):
         layout.setVerticalSpacing(20)
         layout.setContentsMargins(50, 10, 50, 10)
 
-        self.initSlider()
+        self.initAISlider()
+        self.initTimerSlider()
         self.initComboPlayer()
 
         layout.addRow(QLabel("Joueur 1:"), self.comboPlayer1)
         layout.addRow(QLabel("Joueur 2:"), self.comboPlayer2)
-        layout.addRow(QLabel("Délai de l'IA (en secondes):"), self.AITimer)
+        layout.addRow(QLabel("Délai de l'IA (en secondes):"), self.AIDelay)
         layout.addWidget(self.AISlider)
-
+        layout.addRow(QLabel("Durée du timer (en secondes): "), self.AITimer)
+        layout.addWidget(self.timer)
         self.parametersBox.setLayout(layout)
 
     def initComboPlayer(self):
@@ -94,34 +97,58 @@ class App(QWidget):
         self.comboPlayer1.activated[str].connect(self.updatePlayers)
         self.comboPlayer2.activated[str].connect(self.updatePlayers)
 
-    def initSlider(self):
+    def initAISlider(self):
         self.AISlider = QSlider(Qt.Horizontal)
         self.AISlider.setMaximum(20)
         self.AISlider.setMinimum(0)
         self.AISlider.setSingleStep(1)
-        self.AISlider.valueChanged.connect(self.updateAITimer)
-        self.AITimer = QLabel("0")
+        self.AISlider.valueChanged.connect(self.updateAIDelay)
+        self.AIDelay = QLabel("0")
 
-    def updateAITimer(self):
-        self.AITimer.setText(str(self.AISlider.value() / 10))
+    def updateAIDelay(self):
+        self.AIDelay.setText(str(self.AISlider.value() / 10))
         self.delay = self.AISlider.value()
+
+    def initTimerSlider(self):
+        self.timer = QSlider(Qt.Horizontal)
+        self.timer.setMaximum(10)
+        self.timer.setMinimum(2)
+        self.timer.setSingleStep(1)
+        self.timer.valueChanged.connect(self.updateTimer)
+        self.AITimer = QLabel("2")
+
+    def updateTimer(self):
+        self.timerValue = self.timer.value()
+        self.AITimer.setText(str(self.timerValue))
 
     def updatePlayers(self):
         if not self.playing:
             if self.comboPlayer1.currentText() == "Humain" and self.comboPlayer2.currentText() == "Humain":
-                self.AISlider.hide()
-                self.AITimer.setText("L'IA ne jouera pas si les deux joueurs sont humains.")
-                self.AISlider.setValue(-1)
+                self.hideAIParameters()
 
             else:
-                self.AITimer.setText(str(self.AISlider.value() / 10))
-                self.AISlider.show()
+                self.showAIParameters()
         else:
             warning = QMessageBox()
             warning.setWindowTitle("Avertissement")
             warning.setText("Les joueurs ne peuvent pas être changés en pleine partie. Vos changements ne seront pas "
                             "pris en compte.")
             warning.exec_()
+
+    def showAIParameters(self):
+        self.AIDelay.setText(str(self.AISlider.value() / 10))
+        self.AISlider.show()
+        self.timerValue = self.timer.value()
+        self.AITimer.setText(str(self.timerValue))
+        self.timer.show()
+
+    def hideAIParameters(self):
+        self.AISlider.hide()
+        self.AIDelay.setText("L'IA ne jouera pas si les deux joueurs sont humains.")
+        self.AISlider.setValue(-1)
+        self.timer.hide()
+        self.AITimer.setText("L'IA ne jouera pas si les deux joueurs sont humains.")
+        self.timer.setValue(-1)
 
     def createScene(self):
         self.preview = QLabel("Aperçu")
@@ -189,19 +216,14 @@ class App(QWidget):
             else:
                 self.refreshScene()
         else:
-            self.errorMessage()
-
-    def errorMessage(self):
-        error = QMessageBox()
-        error.setWindowTitle("Erreur")
-        error.setText("Veuillez sélectionner un fichier .txt")
-        error.exec_()
+            Utils.errorMessage()
 
     def play(self):
         self.refreshScene()
         self.moveCounter = 0
         self.playing = True
         self.delay = self.AISlider.value()
+        self.timerValue = self.timer.value()
         self.createStopButton()
         self.player1Type = self.comboPlayer1.currentText()
         self.player2Type = self.comboPlayer2.currentText()
@@ -230,7 +252,8 @@ class App(QWidget):
         if winner != 0:
             self.displayWinner(winner)
         else:
-            self.AIVSAI(nextPlayer, currentPlayer)
+            if self.playing:
+                self.AIVSAI(nextPlayer, currentPlayer)
 
     def humanVSAI(self, currentPlayer, nextPlayer):
         self.currentPlayer = currentPlayer
@@ -266,17 +289,18 @@ class App(QWidget):
         # l'adversaire
 
         move = self.IASelectMove(IA)
-        if not move:
-            self.stopGame()
-        else:
-            pegToMove = self.findPegToMove(move)
-            destinationX, destinationY = self.movePeg(move, pegToMove)
-            self.checkEatenPeg(destinationX, destinationY)
-            self.game.makeMove(self.currentPlayer, move[0], move[1])
-            self.IASetRoot(IA)
-            self.moveCounter += 1
-            if self.moveCounter == 1 and IA is None:
-                self.humanVSAI(self.nextPlayer, self.currentPlayer)
+        if self.playing:
+            if not move:
+                self.stopGame()
+            else:
+                pegToMove = self.findPegToMove(move)
+                destinationX, destinationY = self.movePeg(move, pegToMove)
+                self.checkEatenPeg(destinationX, destinationY)
+                self.game.makeMove(self.currentPlayer, move[0], move[1])
+                self.IASetRoot(IA)
+                self.moveCounter += 1
+                if self.moveCounter == 1 and IA is None:
+                    self.humanVSAI(self.nextPlayer, self.currentPlayer)
 
     def IASetRoot(self, IA):
         if IA is None:
@@ -285,12 +309,29 @@ class App(QWidget):
             IA.setRoot(self.game.board)
 
     def IASelectMove(self, IA):
+        moment = time.time()
         if IA is None:
 
             move = self.game.IA.selectMove()
         else:
             move = IA.selectMove()
+        timeout = time.time()
+        if timeout > moment + self.timerValue:
+            if IA is None:
+                self.AITimeout(self.game.IA.playerID)
+            else:
+                self.AITimeout(IA.playerID)
         return move
+
+    def AITimeout(self, playerID):
+        timeout = QMessageBox()
+        timeout.setWindowTitle("Timeout!")
+        timeout.setText("L'IA a pris trop de temps pour jouer. Son adversaire a donc remporté la partie.")
+        timeout.exec_()
+        if playerID == 1:
+            self.displayWinner(2)
+        else:
+            self.displayWinner(1)
 
     def checkEatenPeg(self, destinationX, destinationY):
         if self.currentPlayer == "white":
@@ -347,7 +388,8 @@ class App(QWidget):
         # si on clique sur une case après avoir cliqué sur un pion, il faut bloquer tous les autres pions et toutes les
         # autres cases disponibles pour ces pions précédents
         self.selectPos()
-        self.game.IA.setRoot(self.game.board)
+        if self.player1Type == "Minimax" or self.player2Type == "Minimax" :
+            self.game.IA.setRoot(self.game.board)
         winner = self.game.getWinner()
         if winner != 0:
             self.stopGame()
