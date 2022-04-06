@@ -98,7 +98,7 @@ class Board:
             lineCoord, columnCoord = Utils.extractPosition(self.lineDimension, i)
             self.board[lineCoord][columnCoord] = player
 
-    """def printBoard(self):
+    def printBoard(self):
         alphabet = "abcdefghijklmnopqrstuvwxyz"
         print(" " * 3 + self.columnDimension * " —")
         for line in range(self.lineDimension):
@@ -115,7 +115,7 @@ class Board:
         print(" " * 3, end="")
         for i in range(self.columnDimension):
             print(" " + alphabet[i], end="")
-        print("\n")"""
+        print("\n")
 
     def detectWinner(self, player, nextPlayer):
         """

@@ -304,9 +304,9 @@ class App(QWidget):
 
     def IASetRoot(self, IA):
         if IA is None:
-            self.game.IA.setRoot(self.game.board)
+            self.game.IA.setRoot(self.game.board, self.game)
         else:
-            IA.setRoot(self.game.board)
+            IA.setRoot(self.game.board, self.game)
 
     def IASelectMove(self, IA):
         moment = time.time()
@@ -388,8 +388,8 @@ class App(QWidget):
         # si on clique sur une case après avoir cliqué sur un pion, il faut bloquer tous les autres pions et toutes les
         # autres cases disponibles pour ces pions précédents
         self.selectPos()
-        if self.player1Type == "Minimax" or self.player2Type == "Minimax" :
-            self.game.IA.setRoot(self.game.board)
+        if self.player1Type == "Minimax" or self.player2Type == "Minimax":
+            self.game.IA.setRoot(self.game.board, self.game)
         winner = self.game.getWinner()
         if winner != 0:
             self.stopGame()

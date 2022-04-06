@@ -1,12 +1,12 @@
-# question : si plusieurs noeuds ont la même valeur UTC, itérer sur tous les noeuds de même valeur?
 import math
 import random
+import time
 from operator import attrgetter
 
 import Utils
 import Board
 
-
+# todo: fin de correction de l'AI
 class GameState:
     # structure qui représente un état de jeu inclus dans un node
     def __init__(self, board, player, opponent, winner=0):
@@ -29,32 +29,62 @@ class Node:
 
         if root:
             root.children.append(self)
-        if self.gameState.winner == 0:
-            self.setChildren()
+        self.generateRoute()
 
-    def setChildren(self):
-        childrenBoards = self.findChildrenBoards()
-        if len(childrenBoards) != 0:
-            for board in childrenBoards:
-                winner = board.findWinner()
-                gameState = GameState(board, self.gameState.opponent, self.gameState.player, winner)
-                Node(gameState, self)
+    def createTree(self):
+        counter = self.findPossibleMovesAmount()
+        timeout = time.time() + 1.5
+        for i in range(counter):
+            if time.time() >= timeout:
+                break
+            else:
+                self.generateRoute()
 
-    def findChildrenBoards(self):
-        childrenBoards = []
+    def findPossibleMovesAmount(self):
+        counter = 0
+        possibleSourceMoves = Utils.findBoardSources(self.gameState.board, self.gameState.player)
+        for source in possibleSourceMoves:
+            possibleDestinationMoves = Utils.findPossibleDestinations(source, self.gameState.board,
+                                                                      self.gameState.player)
+            counter += len(possibleDestinationMoves)
+        return counter
+
+    def createChild(self, board):
+        winner = board.findWinner()
+        gameState = GameState(board, self.gameState.opponent, self.gameState.player, winner)
+        Node(gameState, self)
+
+    def generateRoute(self):
+        board = None
         possibleSourceMoves = Utils.findBoardSources(self.gameState.board, self.gameState.player)
         for source in possibleSourceMoves:
             possibleDestinationMoves = Utils.findPossibleDestinations(source, self.gameState.board,
                                                                       self.gameState.player)
             for destination in possibleDestinationMoves:
-                self.simulateMove(childrenBoards, destination, source)
-        return childrenBoards
+                board = self.simulateMove(destination, source)
+                if board:
+                    break
+            if board:
+                break
+        if board and self.gameState.winner == 0:
+            self.createChild(board)
 
-    def simulateMove(self, childrenBoards, destination, source):
+    def simulateMove(self, destination, source):
+        res = None
         deletedPeg = self.makeMove(source, destination)
         board = Board.Board(None, self.gameState.board.getBoard())
-        childrenBoards.append(board)
+        if self.checkChildren(board):
+            res = board
         self.undoMove(deletedPeg, source, destination)
+        return res
+
+    def checkChildren(self, board):
+        if len(self.children) == 0:
+            return True
+        for child in self.children:
+            if child.gameState.board.getBoard() == board.getBoard():
+                return False
+        return True
 
     def makeMove(self, source, dest):
         deletedPeg = self.gameState.board.updateBoard(source, dest, self.gameState.player)
@@ -72,15 +102,37 @@ class Tree:
     def __init__(self, player, game):
         self.playerID = player.getPlayerID()
         self.c = 1.4
-        gameState = GameState(game.board, game.player1, game.player2)
-
+        gameState = self.generateGameState(game)
         self.root = Node(gameState)
+        self.root.createTree()
         self.searchTree(self.root)
 
-    def setRoot(self, board):
+    def generateGameState(self, game, winner=0):
+        if self.playerID == 1:
+            gameState = GameState(game.board, game.player1, game.player2, winner)
+        else:
+            gameState = GameState(game.board, game.player2, game.player1, winner)
+        return gameState
+
+    def setRoot(self, board, game):
+        found = False
         for child in self.root.children:
             if child.gameState.board.getBoard() == board.getBoard():
                 self.root = child
+                self.root.createTree()
+                found = True
+        if not found:
+            self.createNewRoot(board, game)
+
+    def createNewRoot(self, board, game):
+        winner = board.findWinner()
+        gameState = self.generateGameState(game, winner)
+        if winner != 2:
+            node = Node(gameState)
+            self.root = node
+            self.root.createTree()
+            if len(self.root.children) > 0:
+                self.searchTree(self.root)
 
     def selectMove(self):
         if len(self.root.children) > 0:
@@ -92,6 +144,7 @@ class Tree:
             self.root = child
         else:
             move = None
+        print(move)
         return move
 
     def searchTree(self, node):
@@ -106,7 +159,6 @@ class Tree:
         child = self.choseChild(self.root)
         if len(child.children) > 0:
             self.searchTree(child)
-        # appel récursif: la simulation recommence sur child
 
     def simulation(self, node):
         path = []
@@ -150,10 +202,3 @@ class Tree:
                     else:
                         res = self.choseChild(child)
         return res
-
-
-# faut il mettre un timer pour l'élaboration de l'arbre? ou juste pour les coups que l'AI effectue?
-# question: il faut bien faire un arbre avec absolument tous les coups possibles? Parce qu'avec une dimension de 3
-# ou de 4 pour le plateau ça va encore, mais si les dimensions sont plus grandes, l'arbre prend une éternité pour
-# se construire, mais les coups restent très rapides
-# autre question: est ce que les timers sont valables quand le mode est ai vs ai?
