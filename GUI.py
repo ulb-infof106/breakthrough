@@ -18,6 +18,9 @@ class App(QWidget):
 
     def __init__(self):
         super().__init__()
+        self.fileSelected = None
+        self.stop = None
+        self.board = None
         self.scene = None
         self.playing = False
         self.pegClicked = False
@@ -205,9 +208,9 @@ class App(QWidget):
                 self.scene.addItem(rect)
 
     def dialog(self):
+
         self.file, check = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()",
                                                        "", "Text Files (*.txt)")
-
         if check and self.file.endswith('.txt'):
             self.board = Board.Board(self.file)
             self.fileSelected.setText(self.file)
@@ -217,6 +220,7 @@ class App(QWidget):
                 self.refreshScene()
         else:
             Utils.errorMessage()
+            self.start.hide()
 
     def play(self):
         self.refreshScene()
@@ -227,7 +231,7 @@ class App(QWidget):
         self.createStopButton()
         self.player1Type = self.comboPlayer1.currentText()
         self.player2Type = self.comboPlayer2.currentText()
-        self.game = Game.Game(self.player1Type, self.player2Type, self.board)
+        self.game = Game.Game(self.player1Type, self.player2Type, self.board, self.timerValue)
         self.selectGameMode()
         self.scene.selectionChanged.connect(self.selectionHandler)
 
@@ -306,7 +310,8 @@ class App(QWidget):
         if IA is None:
             self.game.IA.setRoot(self.game.board, self.game)
         else:
-            IA.setRoot(self.game.board, self.game)
+            self.game.IA1.setRoot(self.game.board, self.game)
+            self.game.IA2.setRoot(self.game.board, self.game)
 
     def IASelectMove(self, IA):
         moment = time.time()
@@ -367,6 +372,9 @@ class App(QWidget):
         return pegToMove
 
     def refreshScene(self):
+        if self.stop:
+            self.stop.hide()
+        self.start.show()
         self.preview.show()
         for item in self.scene.items():
             self.scene.removeItem(item)

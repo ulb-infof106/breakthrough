@@ -16,7 +16,7 @@ class Game:
     Classe qui représente l'état de la partie
     """
 
-    def __init__(self, player1, player2, board):
+    def __init__(self, player1, player2, board, timer):
         """
         Constructeur de la classe représentant l'état de la partie. On commence par initialiser un plateau via un
         fichier, et on crée des instances de 2 joueurs, puis celle de l'IA qui correspondra à un joueur.
@@ -25,18 +25,18 @@ class Game:
         self.board = board
         self.player1 = Player.Player(1, self.board)
         self.player2 = Player.Player(2, self.board)
-        self.chooseGameMode(player1, player2)
+        self.chooseGameMode(player1, player2, timer)
 
-    def chooseGameMode(self, player1, player2):
+    def chooseGameMode(self, player1, player2, timer):
         if player1 == "Humain":
             if player2 == "Minimax":
-                self.IA = Montecarlo.Tree(self.player2, self)
+                self.IA = Montecarlo.Tree(self.player2, self, timer)
         else:
             if player2 == "Humain":
-                self.IA = Montecarlo.Tree(self.player1, self)
+                self.IA = Montecarlo.Tree(self.player1, self, timer)
             else:
-                self.IA1 = Montecarlo.Tree(self.player1, self)
-                self.IA2 = Montecarlo.Tree(self.player2, self)
+                self.IA1 = Montecarlo.Tree(self.player1, self, timer)
+                self.IA2 = Montecarlo.Tree(self.player2, self, timer)
 
     def getBoard(self):
         """

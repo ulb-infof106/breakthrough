@@ -214,15 +214,15 @@ def selectedPegContour(i, item, movablePegs):
         item.setPen(pen)
 
 
-def findMove(board1, board2):
+def findMove(board1, board2, playerID):
     move = []
     temp = []
     for i in range(len(board1)):
         if board1[i] != board2[i]:
             for j in range(len(board1[i])):
-                if board1[i][j] != board2[i][j]:
+                if board1[i][j] != board2[i][j] : #and (board1[i][j] == playerID or board2[i][j] == playerID):
                     temp.append([i, j])
-    if board1[temp[0][0]][temp[0][1]] == 0:
+    if board1[temp[0][0]][temp[0][1]] != playerID:
         move.append(temp[1])
         move.append(temp[0])
     else:

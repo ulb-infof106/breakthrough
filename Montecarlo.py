@@ -6,7 +6,6 @@ from operator import attrgetter
 import Utils
 import Board
 
-# todo: fin de correction de l'AI
 class GameState:
     # structure qui représente un état de jeu inclus dans un node
     def __init__(self, board, player, opponent, winner=0):
@@ -31,9 +30,9 @@ class Node:
             root.children.append(self)
         self.generateRoute()
 
-    def createTree(self):
+    def createTree(self, timer):
         counter = self.findPossibleMovesAmount()
-        timeout = time.time() + 1.5
+        timeout = time.time() + timer*0.75
         for i in range(counter):
             if time.time() >= timeout:
                 break
@@ -42,6 +41,7 @@ class Node:
 
     def findPossibleMovesAmount(self):
         counter = 0
+
         possibleSourceMoves = Utils.findBoardSources(self.gameState.board, self.gameState.player)
         for source in possibleSourceMoves:
             possibleDestinationMoves = Utils.findPossibleDestinations(source, self.gameState.board,
@@ -71,6 +71,7 @@ class Node:
 
     def simulateMove(self, destination, source):
         res = None
+
         deletedPeg = self.makeMove(source, destination)
         board = Board.Board(None, self.gameState.board.getBoard())
         if self.checkChildren(board):
@@ -99,12 +100,13 @@ class Node:
 
 
 class Tree:
-    def __init__(self, player, game):
+    def __init__(self, player, game, timer):
+        self.timer = timer
         self.playerID = player.getPlayerID()
         self.c = 1.4
         gameState = self.generateGameState(game)
         self.root = Node(gameState)
-        self.root.createTree()
+        self.root.createTree(self.timer)
         self.searchTree(self.root)
 
     def generateGameState(self, game, winner=0):
@@ -119,18 +121,25 @@ class Tree:
         for child in self.root.children:
             if child.gameState.board.getBoard() == board.getBoard():
                 self.root = child
-                self.root.createTree()
+                self.root.createTree(self.timer)
                 found = True
         if not found:
             self.createNewRoot(board, game)
 
+    def generateChildGameState(self, game, winner):
+        if self.root.gameState.player.getPlayerID() == 1:
+            gameState = GameState(game.board, game.player1, game.player2, winner)
+        else:
+            gameState = GameState(game.board, game.player2, game.player1, winner)
+        return gameState
+
     def createNewRoot(self, board, game):
         winner = board.findWinner()
-        gameState = self.generateGameState(game, winner)
+        gameState = self.generateChildGameState(game, winner)
         if winner != 2:
             node = Node(gameState)
             self.root = node
-            self.root.createTree()
+            self.root.createTree(self.timer)
             if len(self.root.children) > 0:
                 self.searchTree(self.root)
 
@@ -140,11 +149,10 @@ class Tree:
             if child.gameState.board.getBoard() == self.root.gameState.board.getBoard():
                 self.root = child
                 child = max(self.root.children, key=attrgetter('counter'))
-            move = Utils.findMove(self.root.gameState.board.getBoard(), child.gameState.board.getBoard())
+            move = Utils.findMove(self.root.gameState.board.getBoard(), child.gameState.board.getBoard(), self.playerID)
             self.root = child
         else:
             move = None
-        print(move)
         return move
 
     def searchTree(self, node):
