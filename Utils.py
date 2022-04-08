@@ -220,7 +220,7 @@ def findMove(board1, board2, playerID):
     for i in range(len(board1)):
         if board1[i] != board2[i]:
             for j in range(len(board1[i])):
-                if board1[i][j] != board2[i][j] : #and (board1[i][j] == playerID or board2[i][j] == playerID):
+                if board1[i][j] != board2[i][j]:  # and (board1[i][j] == playerID or board2[i][j] == playerID):
                     temp.append([i, j])
     if board1[temp[0][0]][temp[0][1]] != playerID:
         move.append(temp[1])
@@ -244,8 +244,8 @@ def initColorPeg(i, j):
     return brush
 
 
-def errorMessage():
-    error = QMessageBox()
-    error.setWindowTitle("Erreur")
-    error.setText("Veuillez sélectionner un fichier .txt")
-    error.exec_()
+def displayMessageBox(windowTitle, text):
+    messageBox = QMessageBox()
+    messageBox.setWindowTitle(windowTitle)
+    messageBox.setText(text)
+    messageBox.exec_()
