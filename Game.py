@@ -2,7 +2,7 @@
 Nom: De Keyser
 Prénom: Maeva
 Matricule: 000454537
-Section: BA3 INFO
+Section: BA INFO
 """
 
 import Player

@@ -1,3 +1,9 @@
+"""
+Nom: De Keyser
+Prénom: Maeva
+Matricule: 000454537
+Section: BA INFO
+"""
 import math
 import random
 import time
