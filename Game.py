@@ -93,26 +93,56 @@ class Game:
     def detectWin(self):
         """
         Méthode qui permet de détecter si le coup venant d'être joué fait gagner un des joueurs.
-        : return : aucun
         """
         wonPlayer1 = self.board.detectWinner(self.player1, self.player2)
         wonPlayer2 = self.board.detectWinner(self.player2, self.player1)
         self.winner = wonPlayer1 + wonPlayer2
 
     def getMovablePegs(self, currentPlayer):
+        """
+        Méthode qui permet de trouver les sources de mouvements possibles pour un certain joueur en fonction de sa
+        couleur.
+        : param currentPlayer : couleur du joueur actuel
+        : return : liste des sources de mouvements possibles
+        """
         if currentPlayer == "white":
             return Utils.findPossibleSources(self.board, self.player1)
         else:
             return Utils.findPossibleSources(self.board, self.player2)
 
     def getPossibleDestinations(self, currentPlayer, pos):
-        # on envoie une pos et on veut obtenir tous les mouvements possibles pour cette pos
+        """
+        Méthode qui permet de trouver les destinations de mouvements possibles pour un certain joueur en fonction de sa
+        couleur et d'une source donnée.
+        : param currentPlayer : couleur du joueur actuel
+        : param pos : source de mouvement donnée
+        : return : liste des destinations de mouvements possibles
+        """
         if currentPlayer == "white":
             return Utils.findPossibleDestinations(pos, self.board, self.player1)
         else:
             return Utils.findPossibleDestinations(pos, self.board, self.player2)
 
+    def getPlayers(self, currentPlayer):
+        """
+        Méthode permettant de récupérer les joueurs de la partie en fonction de la couleur du joueur actuel
+        : param currentPlayer : couleur du joueur actuel
+        : return : 2 objets de la classe player
+        """
+        if currentPlayer == "white":
+            return self.player1, self.player2
+        else:
+            return self.player2, self.player1
+
     def makeMove(self, currentPlayer, source, destination):
+        """
+        Méthode qui permet de créer un objet mouvement en fonction d'un joueur et d'une source et destination de
+        mouvement. Si ce mouvement est correct, on met à jour le plateau de jeu en fonction.
+        : param currentPlayer : joueur qui joue actuellement
+        : param source : source du mouvement
+        : param destination : destination du mouvement
+        : return : True si le mouvement est correct, False sinon
+        """
         currentPlayer, nextPlayer = self.getPlayers(currentPlayer)
         move = Move.Move(currentPlayer, source, destination)
         if self.checkDiagonalMove(currentPlayer, move.getSource(), move.getDestination()) and self.checkForwardMove(
@@ -123,11 +153,8 @@ class Game:
         return False
 
     def getWinner(self):
+        """
+        Getter retournant le gagnant de la partie
+        """
         self.detectWin()
         return self.winner
-
-    def getPlayers(self, currentPlayer):
-        if currentPlayer == "white":
-            return self.player1, self.player2
-        else:
-            return self.player2, self.player1

@@ -2,7 +2,7 @@
 Nom: De Keyser
 Prénom: Maeva
 Matricule: 000454537
-Section: BA3 INFO
+Section: BA INFO
 """
 
 import Utils
@@ -19,6 +19,8 @@ class Board:
         initialisé selon son contenu, sinon, un plateau de base est crée.
         :param file: Fichier reçu en entrée.
         """
+        self.columnDimension = None
+        self.lineDimension = None
         self.board = []
 
         try:
@@ -28,23 +30,12 @@ class Board:
                 self.createGivenBoard(board)
             else:
                 self.setDefaultBoard()
-
-    def createGivenBoard(self, board):
-        self.lineDimension = len(board)
-        self.columnDimension = len(board[0])
-        self.copyBoard(board)
-
-    def createFileBoard(self, file):
-        with open(file) as f:
-            line = f.readlines()
-        self.lineDimension = int(line[0].rstrip("\n").strip(" ")[0])
-        self.columnDimension = int(line[0].rstrip("\n").strip(" ")[2])
-        for i in range(self.lineDimension):
-            self.board.append([0 for i in range(self.columnDimension)])
-        self.placeOnBoard(line[1], 1)
-        self.placeOnBoard(line[2], 2)
-
+    
     def copyBoard(self, board):
+        """
+        Méthode qui permet de copier un plateau.
+        : param board : plateau à copier
+        """
         for i in range(len(board)):
             self.board.append([])
             for j in range(len(board[0])):
@@ -55,8 +46,30 @@ class Board:
                 elif board[i][j] == 2:
                     self.board[i].append(2)
 
-    def getlineDimension(self):
+    def createGivenBoard(self, board):
+        """
+        Méthode qui permet de créer un objet board sans référence à l'aide d'une matrice fournie 
+        : param board : plateau de jeu à intégrer à l'objet
+        """
+        self.lineDimension = len(board)
+        self.columnDimension = len(board[0])
+        self.copyBoard(board)
 
+    def createFileBoard(self, file):
+        """
+        Méthode qui permet de créer un plateau en fonction d'un fichier reçu 
+        : param file : fichier reçu, contenant les dimensions du plateau
+        """
+        with open(file) as f:
+            line = f.readlines()
+        self.lineDimension = int(line[0].rstrip("\n").strip(" ")[0])
+        self.columnDimension = int(line[0].rstrip("\n").strip(" ")[2])
+        for i in range(self.lineDimension):
+            self.board.append([0 for i in range(self.columnDimension)])
+        self.placeOnBoard(line[1], 1)
+        self.placeOnBoard(line[2], 2)
+
+    def getlineDimension(self):
         """
         getter qui permet de fournir la dimention en lignes du plateau
         :return: la dimension en ligne
@@ -66,15 +79,22 @@ class Board:
     def getColumnDimension(self):
 
         """
-        getter qui permet de fournir la dimention en colonnes du plateau
-        :return: la dimension en colonne
+        Getter qui permet de fournir la dimention en colonnes du plateau
+        : return : la dimension en colonne
         """
         return self.columnDimension
 
     def getBoard(self):
+        """
+        Getter permettant de fournir la matrice correspondant au plateau
+        : return : la matrice correspondant au plateau
+        """
         return self.board
 
     def setDefaultBoard(self):
+        """
+        Méthode permettant d'initialiser un plateau par défaut, sans base de fichier
+        """
         self.lineDimension = self.columnDimension = 7
         for i in range(self.lineDimension):
             if i == 0 or i == 1:
@@ -97,25 +117,6 @@ class Board:
         for i in pegs:
             lineCoord, columnCoord = Utils.extractPosition(self.lineDimension, i)
             self.board[lineCoord][columnCoord] = player
-
-    def printBoard(self):
-        alphabet = "abcdefghijklmnopqrstuvwxyz"
-        print(" " * 3 + self.columnDimension * " —")
-        for line in range(self.lineDimension):
-            print(str(-(line - self.lineDimension)) + " | ", end="")
-            for column in range(self.columnDimension):
-                if self.board[line][column] == 0:
-                    print(".", end=" ")
-                elif self.board[line][column] == 1:
-                    print("W", end=" ")
-                elif self.board[line][column] == 2:
-                    print("B", end=" ")
-            print("|")
-        print(" " * 3 + self.columnDimension * " —")
-        print(" " * 3, end="")
-        for i in range(self.columnDimension):
-            print(" " + alphabet[i], end="")
-        print("\n")
 
     def detectWinner(self, player, nextPlayer):
         """
@@ -159,6 +160,13 @@ class Board:
         return eatenPeg
 
     def backwardsUpdate(self, destinationpos, player, sourcePos):
+        """
+        Méthode qui permet de mettre à jour le plateau "à l'envers": il s'agit de l'annulation d'un coup, spécifiquement
+        si un pion adverse a été mangé.
+        : param destinationpos : destination de l'annulation du coup
+        : param player : joueur concerné
+        : param sourcePos : source de l'annulation du coup
+        """
         if player.getPlayerID() == 2:
             self.board[sourcePos[0]][sourcePos[1]] = 1
             self.board[destinationpos[0]][destinationpos[1]] = player.getPlayerID()
@@ -167,13 +175,42 @@ class Board:
             self.board[destinationpos[0]][destinationpos[1]] = player.getPlayerID()
 
     def forwardUpdate(self, destinationpos, eatenPeg, player, sourcePos):
+        """
+        Méthode qui permet de mettre à jour le plateau de façon régulière et de mémoriser si un pion a été mangé
+        : param destinationpos : destination du mouvement
+        : param eatenPeg : pion mangé
+        : param player : joueur concerné
+        : param sourcePos : source du mouvement
+        : return : pion mangé
+        """
         if self.board[destinationpos[0]][destinationpos[1]] != 0:
             eatenPeg = self.board[destinationpos[0]][destinationpos[1]]
         self.board[sourcePos[0]][sourcePos[1]] = 0
         self.board[destinationpos[0]][destinationpos[1]] = player.getPlayerID()
         return eatenPeg
 
+    def findCounter(self):
+        """
+        Méthode permettant de trouver le nombre de pions noirs et de pions blanc le plateau possède
+        : return : le nombre de pions blancs et le nombre de pions noirs
+        """
+        counterWhite = 0
+        counterBlack = 0
+        for i in range(self.lineDimension):
+            if 2 in self.board[i]:
+                counterBlack += 1
+            if 1 in self.board[i]:
+                counterWhite += 1
+        return counterWhite, counterBlack
+
     def findWinner(self):
+        """
+        Méthode qui permet de trouver un gagnant en fonction du nombre de pions:
+        Si aucun pion blanc n'est trouvé, le joueur noir a gagné et vice-versa.
+        Si un pion noir est trouvé sur la dernière ligne, le joueur noir a gagné.
+        Si un pion blanc est trouvé sur la première ligne, le joueur blanc a gagné.
+        : return : le playerID du gagnant
+        """
         counter1, counter2 = self.findCounter()
         if counter1 == 0:
             return 2
@@ -185,12 +222,3 @@ class Board:
             return 2
         return 0
 
-    def findCounter(self):
-        counter1 = 0
-        counter2 = 0
-        for i in range(self.lineDimension):
-            if 2 in self.board[i]:
-                counter2 += 1
-            if 1 in self.board[i]:
-                counter1 += 1
-        return counter1, counter2
