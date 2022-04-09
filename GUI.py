@@ -55,7 +55,7 @@ class App(QWidget):
         self.stop = None
         self.board = None
         self.scene = None
-        self.playing = False
+        self.playing = None
         self.pegClicked = False
         self.posClicked = False
         self.blackPegs = []
@@ -341,7 +341,8 @@ class App(QWidget):
                 self.refreshScene()
         else:
             Utils.displayMessageBox("Erreur", "Veuillez sélectionner un fichier .txt")
-            self.start.hide()
+            if self.playing is not None:
+                self.start.hide()
 
     # ------------------------------------- partie qui gère le mode de jeu humain vs humain ----------------------------
 
