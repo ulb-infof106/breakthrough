@@ -60,14 +60,17 @@ class Board:
         Méthode qui permet de créer un plateau en fonction d'un fichier reçu 
         : param file : fichier reçu, contenant les dimensions du plateau
         """
-        with open(file) as f:
-            line = f.readlines()
-        self.lineDimension = int(line[0].rstrip("\n").strip(" ")[0])
-        self.columnDimension = int(line[0].rstrip("\n").strip(" ")[2])
-        for i in range(self.lineDimension):
-            self.board.append([0 for i in range(self.columnDimension)])
-        self.placeOnBoard(line[1], 1)
-        self.placeOnBoard(line[2], 2)
+        try:
+            with open(file) as f:
+                line = f.readlines()
+            self.lineDimension = int(line[0].rstrip("\n").strip(" ")[0])
+            self.columnDimension = int(line[0].rstrip("\n").strip(" ")[2])
+            for i in range(self.lineDimension):
+                self.board.append([0 for i in range(self.columnDimension)])
+            self.placeOnBoard(line[1], 1)
+            self.placeOnBoard(line[2], 2)
+        except ValueError:
+            self.setDefaultBoard()
 
     def getlineDimension(self):
         """
